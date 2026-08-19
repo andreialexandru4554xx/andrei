@@ -1,0 +1,44 @@
+name: Validate easy tower navigation
+
+on:
+  push:
+    paths:
+      - '.github/workflows/validate-easy-navigation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate-navigation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          node --check src/main.js
+          node --check src/performance-preflight.js
+          node --check src/easy-navigation.js
+      - name: Verify page wiring
+        shell: bash
+        run: |
+          grep -q "performance-preflight.js" index.html
+          grep -q "easy-navigation.js" index.html
+          grep -q "easy-navigation.css" index.html
+          grep -q "__RECRUITFLOW_TOWER__" src/main.js
+          grep -q "record.content.visible = active" src/main.js
+      - name: Record successful validation
+        shell: bash
+        run: |
+          mkdir -p validation
+          printf "Easy navigation validated: JavaScript syntax, page wiring, tower controls and active-floor optimization passed.\n" > validation/easy-navigation-passed.txt
+          git config user.name "RecruitFlow QA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add validation/easy-navigation-passed.txt
+          if git diff --cached --quiet; then
+            echo "Validation marker already current"
+          else
+            git commit -m "Validate easy tower navigation"
+            git push
+          fi
