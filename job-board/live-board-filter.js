@@ -41,5 +41,19 @@
       script.dataset.premiumControlCenter = '1';
       document.body.append(script);
     }
+
+    if (!document.querySelector('link[data-ai-recommendations]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'ai-recommendations.css?v=1';
+      link.dataset.aiRecommendations = '1';
+      document.head.append(link);
+    }
+    if (!document.querySelector('script[data-ai-recommendations]')) {
+      const script = document.createElement('script');
+      script.src = 'ai-recommendations.js?v=1';
+      script.dataset.aiRecommendations = '1';
+      document.body.append(script);
+    }
   }, { once: true });
 })();
