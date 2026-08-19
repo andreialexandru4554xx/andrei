@@ -1,155 +1,41 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { secondiCategories, totalSecondi, globalMetrics } from './data.js'
 
-const canvas = document.querySelector('#world')
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true })
-renderer.setPixelRatio(Math.min(devicePixelRatio,2))
-renderer.setSize(innerWidth,innerHeight)
-renderer.shadowMap.enabled = true
-renderer.shadowMap.type = THREE.PCFSoftShadowMap
-renderer.outputColorSpace = THREE.SRGBColorSpace
-renderer.toneMapping = THREE.ACESFilmicToneMapping
-renderer.toneMappingExposure = 1.28
+const canvas=document.querySelector('#world')
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false,alpha:false,powerPreference:'high-performance'})
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.15)); renderer.setSize(innerWidth,innerHeight); renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.shadowMap.enabled=false
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0xf0f4f8); scene.fog=new THREE.Fog(0xf0f4f8,45,90)
+const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,180); camera.position.set(0,25,37)
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.09; controls.minDistance=9; controls.maxDistance=62; controls.maxPolarAngle=Math.PI*.47; controls.target.set(0,1,0)
+scene.add(new THREE.HemisphereLight(0xffffff,0x8b9aad,2.7)); const sun=new THREE.DirectionalLight(0xffffff,2.1); sun.position.set(12,25,10); scene.add(sun)
 
-const scene = new THREE.Scene()
-scene.background = new THREE.Color(0xf0f4f8)
-scene.fog = new THREE.Fog(0xf0f4f8,48,95)
-const pmrem = new THREE.PMREMGenerator(renderer)
-scene.environment = pmrem.fromScene(new RoomEnvironment(),0.05).texture
+function mat(color,o={}){return new THREE.MeshStandardMaterial({color,roughness:o.roughness??.7,metalness:o.metalness??.03,transparent:o.transparent??false,opacity:o.opacity??1})}
+function box(w,h,d,color,o={}){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color,o)); return m}
+function label(text,color,small=true){const c=document.createElement('canvas'); c.width=small?384:640; c.height=small?64:150; const x=c.getContext('2d'); x.fillStyle=small?'rgba(255,255,255,.88)':'rgba(8,13,22,.90)'; x.fillRect(0,0,c.width,c.height); x.strokeStyle=small?'rgba(20,30,45,.14)':color; x.lineWidth=small?1:4; x.strokeRect(2,2,c.width-4,c.height-4); x.textAlign='center'; x.textBaseline='middle'; x.fillStyle=small?'#152235':'#fff'; x.font=small?'700 20px Arial':'900 46px Arial'; x.fillText(text,c.width/2,c.height/2); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false})); s.scale.set(small?.72:2.8,small?.12:.66,1); return s}
 
-const camera = new THREE.PerspectiveCamera(48,innerWidth/innerHeight,0.1,220)
-camera.position.set(0,25,37)
-const controls = new OrbitControls(camera,renderer.domElement)
-controls.enableDamping = true
-controls.dampingFactor = 0.06
-controls.minDistance = 9
-controls.maxDistance = 66
-controls.maxPolarAngle = Math.PI*0.47
-controls.target.set(0,1,0)
+const floor=box(34,.12,30,0xf7f8fb,{roughness:.96}); floor.position.y=-.06; scene.add(floor)
+const aisle=box(4.2,.015,29,0xcfd8e4,{roughness:1}); aisle.position.y=.008; scene.add(aisle)
+const back=box(34,5.8,.16,0xe7edf4,{roughness:.94}); back.position.set(0,2.9,-15); scene.add(back)
+for(const x of [-17,17]){const glass=box(.10,5.5,29,0xcfe3f7,{transparent:true,opacity:.22,roughness:.15}); glass.position.set(x,2.75,0); scene.add(glass)}
+for(const [x,z] of [[-11,-10],[-5,-10],[1,-10],[7,-10],[13,-10],[-11,1],[-5,1],[1,1],[7,1],[13,1],[-11,11],[-5,11],[1,11],[7,11],[13,11]]){const l=new THREE.PointLight(0xffffff,.38,8,2); l.position.set(x,5,z); scene.add(l)}
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x8b9aad,2.6))
-const sun = new THREE.DirectionalLight(0xffffff,3.4)
-sun.position.set(12,26,10)
-sun.castShadow = true
-sun.shadow.mapSize.set(2048,2048)
-sun.shadow.camera.left=-32; sun.shadow.camera.right=32; sun.shadow.camera.top=32; sun.shadow.camera.bottom=-32
-scene.add(sun)
+const bodyGeo=new THREE.CapsuleGeometry(.18,.46,3,6), headGeo=new THREE.SphereGeometry(.18,8,6), deskGeo=new THREE.BoxGeometry(1.35,.08,.72), legGeo=new THREE.BoxGeometry(.06,.7,.06), monitorGeo=new THREE.BoxGeometry(.54,.34,.035), chairGeo=new THREE.BoxGeometry(.36,.42,.36)
+const skinMat=mat(0xd3a17d,{roughness:.9}), hairMat=mat(0x35251e,{roughness:.95}), deskMat=mat(0xf7f8fa,{roughness:.84}), legMat=mat(0x8b97a7,{metalness:.15}), chairMat=mat(0x536983,{roughness:.78})
+function station(category,name){const g=new THREE.Group(); const top=new THREE.Mesh(deskGeo,deskMat); top.position.y=.76; g.add(top); for(const [x,z] of [[-.54,-.26],[-.54,.26],[.54,-.26],[.54,.26]]){const l=new THREE.Mesh(legGeo,legMat); l.position.set(x,.35,z); g.add(l)} const mm=mat(0x182333,{roughness:.2}); mm.emissive=new THREE.Color(category.color); mm.emissiveIntensity=.25; const mon=new THREE.Mesh(monitorGeo,mm); mon.position.set(0,1.03,-.2); g.add(mon); const chair=new THREE.Mesh(chairGeo,chairMat); chair.position.set(0,.48,.5); g.add(chair); const torso=new THREE.Mesh(bodyGeo,mat(category.color,{roughness:.72})); torso.position.set(0,.58,.35); g.add(torso); const head=new THREE.Mesh(headGeo,skinMat); head.position.set(0,1.02,.35); g.add(head); const hair=new THREE.Mesh(headGeo,hairMat); hair.scale.set(1.02,.52,1.02); hair.position.set(0,1.09,.35); g.add(hair); const tag=label(name,category.color,true); tag.position.set(0,1.34,.38); g.add(tag); return g}
 
-function box(w,h,d,color,o={}){
-  const m=new THREE.MeshStandardMaterial({color,roughness:o.roughness??0.58,metalness:o.metalness??0.08,transparent:o.transparent??false,opacity:o.opacity??1})
-  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m)
-  mesh.castShadow=o.castShadow??true; mesh.receiveShadow=o.receiveShadow??true
-  return mesh
-}
-
-function label(text,color,small=true){
-  const c=document.createElement('canvas'); c.width=720; c.height=small?100:210
-  const x=c.getContext('2d'); x.clearRect(0,0,c.width,c.height)
-  if(small){
-    x.fillStyle='rgba(255,255,255,.82)'; x.roundRect(70,22,c.width-140,c.height-44,18); x.fill()
-    x.strokeStyle='rgba(19,31,48,.16)'; x.lineWidth=2; x.stroke()
-    x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#152235'; x.font='700 27px Arial';
-    x.shadowColor='rgba(255,255,255,.9)'; x.shadowBlur=2; x.fillText(text,c.width/2,c.height/2)
-  }else{
-    x.fillStyle='rgba(8,13,22,.90)'; x.roundRect(16,16,c.width-32,c.height-32,26); x.fill()
-    x.strokeStyle=color; x.lineWidth=5; x.stroke()
-    x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#fff'; x.font='900 62px Arial'; x.fillText(text,c.width/2,c.height/2)
-  }
-  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace
-  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}))
-  s.scale.set(small?.78:3.2,small?.11:.82,1)
-  return s
-}
-
-function person(color){
-  const g=new THREE.Group()
-  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.18,.46,6,10),new THREE.MeshStandardMaterial({color,roughness:.7}))
-  torso.position.y=.58; torso.castShadow=true; g.add(torso)
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.18,16,14),new THREE.MeshStandardMaterial({color:0xd3a17d,roughness:.9}))
-  head.position.y=1.02; head.castShadow=true; g.add(head)
-  const hair=new THREE.Mesh(new THREE.SphereGeometry(.185,14,12,0,Math.PI*2,0,Math.PI*.55),new THREE.MeshStandardMaterial({color:0x35251e,roughness:.95}))
-  hair.position.y=1.08; g.add(hair)
-  return g
-}
-
-function desk(category,name){
-  const g=new THREE.Group()
-  const top=box(1.35,.08,.72,0xf7f8fa,{roughness:.84,metalness:.03}); top.position.y=.76; g.add(top)
-  for(const [x,z] of [[-.54,-.26],[-.54,.26],[.54,-.26],[.54,.26]]){const l=box(.06,.7,.06,0x8b97a7,{metalness:.22}); l.position.set(x,.35,z); g.add(l)}
-  const mon=box(.54,.34,.04,0x182333,{roughness:.16,metalness:.18}); mon.position.set(0,1.03,-.20); mon.material.emissive=new THREE.Color(category.color); mon.material.emissiveIntensity=.35; g.add(mon)
-  const chair=box(.36,.42,.36,0x536983,{roughness:.78}); chair.position.set(0,.48,.50); g.add(chair)
-  const p=person(category.color); p.position.set(0,0,.35); g.add(p)
-  const tag=label(name,category.color,true); tag.position.set(0,1.32,.38); g.add(tag)
-  return g
-}
-
-const floor=box(34,.18,30,0xf7f8fb,{roughness:.96,castShadow:false}); floor.position.y=-.09; scene.add(floor)
-const aisle=box(4.2,.02,29,0xcfd8e4,{roughness:1,castShadow:false}); aisle.position.y=.011; scene.add(aisle)
-const back=box(34,6,.22,0xe7edf4,{roughness:.94}); back.position.set(0,3,-15); scene.add(back)
-for(const x of [-17,17]){const glass=box(.16,5.8,29,0xcfe3f7,{transparent:true,opacity:.28,roughness:.08,metalness:.12}); glass.position.set(x,2.9,0); scene.add(glass)}
-for(let x=-12;x<=12;x+=6){for(let z=-11;z<=11;z+=7){const panel=box(3.4,.05,1.1,0xffffff,{roughness:.12,castShadow:false}); panel.position.set(x,5.7,z); scene.add(panel); const l=new THREE.PointLight(0xffffff,1.05,10,2); l.position.set(x,5.2,z); scene.add(l)}}
-
-const loungeFloor=box(5.4,.03,4.2,0xe6ebf1,{roughness:.98}); loungeFloor.position.set(0,.015,0); scene.add(loungeFloor)
-const loungeTable=box(1.9,.1,.9,0xc6d0dc,{metalness:.12}); loungeTable.position.set(0,.72,0); scene.add(loungeTable)
-for(const [x,z,r] of [[-1.7,0,Math.PI/2],[1.7,0,Math.PI/2],[0,-1.3,0],[0,1.3,0]]){const s=box(1.3,.58,.72,0x7088a6,{roughness:.84}); s.position.set(x,.3,z); s.rotation.y=r; scene.add(s)}
-
-const layout={
-  yellow:{x:-8.2,z:-8.1,cols:5,face:-Math.PI/2}, blue:{x:8.2,z:-8.1,cols:5,face:Math.PI/2},
-  posts:{x:-8.2,z:3.2,cols:5,face:-Math.PI/2}, classic:{x:8.2,z:3.4,cols:5,face:Math.PI/2},
-  red:{x:-6.0,z:-12.2,cols:3,face:0}, iza:{x:6.0,z:-12.2,cols:1,face:0}, reserve:{x:0,z:10.1,cols:5,face:Math.PI}
-}
-
-const clickable=[]; const sections=new Map(); const raycaster=new THREE.Raycaster(); const pointer=new THREE.Vector2(); let targetCamera=null
-
-function addDepartment(category){
-  const l=layout[category.id], rows=Math.ceil(category.people.length/l.cols), sx=2.05, sz=2.05
-  const g=new THREE.Group(); g.position.set(l.x,0,l.z)
-  const width=Math.max(3,(Math.min(l.cols,category.people.length)-1)*sx+2.2), depth=Math.max(2.5,(rows-1)*sz+2.5)
-  const zone=box(width,.025,depth,category.accent,{transparent:true,opacity:.42,roughness:.98,castShadow:false}); zone.position.y=.015; g.add(zone)
-  const sign=label(`${category.name.toUpperCase()} • ${category.count}`,category.color,false); sign.position.set(0,3.8,-depth/2+.15); g.add(sign)
-  const actualCols=Math.min(l.cols,category.people.length), totalW=(actualCols-1)*sx, totalD=(rows-1)*sz
-  category.people.forEach((name,i)=>{const col=i%l.cols,row=Math.floor(i/l.cols),st=desk(category,name); st.position.set(col*sx-totalW/2,0,row*sz-totalD/2); st.rotation.y=l.face; g.add(st)})
-  const light=new THREE.PointLight(category.color,.85,9,2); light.position.set(0,3,0); g.add(light)
-  const hit=new THREE.Mesh(new THREE.BoxGeometry(width,3.5,depth),new THREE.MeshBasicMaterial({visible:false})); hit.position.y=1.75; hit.userData.categoryId=category.id; g.add(hit); clickable.push(hit)
-  scene.add(g); sections.set(category.id,{category,group:g,layout:l,light,zone})
-}
+const lounge=box(5.2,.025,4,0xe6ebf1,{roughness:.98}); lounge.position.y=.013; scene.add(lounge); const table=box(1.8,.1,.9,0xc6d0dc); table.position.set(0,.7,0); scene.add(table)
+const layout={yellow:{x:-8.2,z:-8.1,cols:5,face:-Math.PI/2},blue:{x:8.2,z:-8.1,cols:5,face:Math.PI/2},posts:{x:-8.2,z:3.2,cols:5,face:-Math.PI/2},classic:{x:8.2,z:3.4,cols:5,face:Math.PI/2},red:{x:-6,z:-12.2,cols:3,face:0},iza:{x:6,z:-12.2,cols:1,face:0},reserve:{x:0,z:10.1,cols:5,face:Math.PI}}
+const clickable=[],sections=new Map(),raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2(); let targetCamera=null,needsRender=true
+function addDepartment(c){const l=layout[c.id],rows=Math.ceil(c.people.length/l.cols),sx=2.05,sz=2.05,g=new THREE.Group(); g.position.set(l.x,0,l.z); const width=Math.max(3,(Math.min(l.cols,c.people.length)-1)*sx+2.2),depth=Math.max(2.5,(rows-1)*sz+2.5); const zone=box(width,.02,depth,c.accent,{transparent:true,opacity:.35,roughness:.98}); zone.position.y=.011; g.add(zone); const sign=label(`${c.name.toUpperCase()} • ${c.count}`,c.color,false); sign.position.set(0,3.55,-depth/2+.15); g.add(sign); const cols=Math.min(l.cols,c.people.length),tw=(cols-1)*sx,td=(rows-1)*sz; c.people.forEach((name,i)=>{const st=station(c,name); st.position.set((i%l.cols)*sx-tw/2,0,Math.floor(i/l.cols)*sz-td/2); st.rotation.y=l.face; g.add(st)}); const hit=new THREE.Mesh(new THREE.BoxGeometry(width,3.3,depth),new THREE.MeshBasicMaterial({visible:false})); hit.position.y=1.65; hit.userData.categoryId=c.id; g.add(hit); clickable.push(hit); scene.add(g); sections.set(c.id,{category:c,group:g,layout:l,zone})}
 secondiCategories.forEach(addDepartment)
 
-for(const [x,z] of [[-14,-12],[14,-12],[-14,11],[14,11],[-2.7,4],[2.7,4]]){const pot=box(.42,.36,.42,0x8795a6); pot.position.set(x,.18,z); scene.add(pot); const trunk=box(.08,.8,.08,0x806447); trunk.position.set(x,.68,z); scene.add(trunk); const leaves=new THREE.Mesh(new THREE.SphereGeometry(.46,16,14),new THREE.MeshStandardMaterial({color:0x5aa87a,roughness:.95})); leaves.position.set(x,1.24,z); scene.add(leaves)}
-
-function populateUI(){
-  const k=document.querySelector('#global-kpis'); if(k) k.innerHTML=globalMetrics.map(([v,l])=>`<div class="kpi-card"><div class="kpi-value">${v}</div><div class="kpi-label">${l}</div></div>`).join('')
-  const list=document.querySelector('#zone-list'); if(!list)return
-  list.innerHTML=secondiCategories.map(c=>`<button class="zone-button" data-zone="${c.id}"><span class="zone-color" style="background:${c.color};box-shadow:0 0 16px ${c.color}88"></span><span class="zone-copy"><span class="zone-name">${c.name}</span><span class="zone-meta">${c.action}</span></span><span class="zone-count" style="color:${c.color}">${c.count}</span></button>`).join('')
-  document.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',()=>focusDepartment(b.dataset.zone)))
-}
-
-function focusDepartment(id){
-  const s=sections.get(id); if(!s)return; const c=s.category
-  document.querySelectorAll('.zone-button').forEach(b=>b.classList.toggle('active',b.dataset.zone===id))
-  const t=document.querySelector('#detail-title'); if(t)t.textContent=c.name
-  const d=document.querySelector('#detail-description'); if(d)d.textContent=c.description
-  const e=document.querySelector('#detail-eyebrow'); if(e)e.textContent=`${c.priority.toUpperCase()} • ${c.action.toUpperCase()}`
-  const k=document.querySelector('#detail-kpis'); if(k)k.innerHTML=`<div class="detail-kpi"><strong>${c.count}</strong><span>oameni</span></div><div class="detail-kpi"><strong>${Math.round(c.count/totalSecondi*100)}%</strong><span>din total</span></div><div class="detail-kpi"><strong>Open</strong><span>office</span></div>`
-  const n=document.querySelector('#detail-note'); if(n)n.innerHTML=`<strong>Nume vizibile:</strong> ${c.people.slice(0,8).join(', ')}${c.people.length>8?'…':''}`
-  sections.forEach(({light,zone},key)=>{light.intensity=key===id?1.45:.65; zone.material.opacity=key===id?.58:.34})
-  const pos=new THREE.Vector3(); s.group.getWorldPosition(pos)
-  const offset=s.layout.x<0?new THREE.Vector3(-6.5,6.5,2.5):s.layout.x>0?new THREE.Vector3(6.5,6.5,2.5):new THREE.Vector3(0,6.8,8)
-  targetCamera={position:pos.clone().add(offset),target:pos.clone().add(new THREE.Vector3(0,1,0))}
-}
-
-function resetView(){
-  targetCamera={position:new THREE.Vector3(0,25,37),target:new THREE.Vector3(0,1,0)}
-  sections.forEach(({light,zone})=>{light.intensity=.85; zone.material.opacity=.42})
-}
-
-populateUI(); resetView()
-const resetButton=document.querySelector('#reset-view'); if(resetButton) resetButton.addEventListener('click',resetView)
-
-window.addEventListener('pointerdown',ev=>{const r=renderer.domElement.getBoundingClientRect(); pointer.x=((ev.clientX-r.left)/r.width)*2-1; pointer.y=-((ev.clientY-r.top)/r.height)*2+1; raycaster.setFromCamera(pointer,camera); const hits=raycaster.intersectObjects(clickable,true); if(hits[0]?.object.userData.categoryId) focusDepartment(hits[0].object.userData.categoryId)})
-window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight)})
-
-function animate(){requestAnimationFrame(animate); if(targetCamera){camera.position.lerp(targetCamera.position,.075); controls.target.lerp(targetCamera.target,.075); if(camera.position.distanceTo(targetCamera.position)<.05)targetCamera=null} controls.update(); renderer.render(scene,camera)}
+function populateUI(){const k=document.querySelector('#global-kpis'); if(k)k.innerHTML=globalMetrics.map(([v,l])=>`<div class="kpi-card"><div class="kpi-value">${v}</div><div class="kpi-label">${l}</div></div>`).join(''); const list=document.querySelector('#zone-list'); if(!list)return; list.innerHTML=secondiCategories.map(c=>`<button class="zone-button" data-zone="${c.id}"><span class="zone-color" style="background:${c.color}"></span><span class="zone-copy"><span class="zone-name">${c.name}</span><span class="zone-meta">${c.action}</span></span><span class="zone-count" style="color:${c.color}">${c.count}</span></button>`).join(''); document.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',()=>focusDepartment(b.dataset.zone)))}
+function focusDepartment(id){const s=sections.get(id); if(!s)return; const c=s.category; document.querySelectorAll('.zone-button').forEach(b=>b.classList.toggle('active',b.dataset.zone===id)); const t=document.querySelector('#detail-title'); if(t)t.textContent=c.name; const d=document.querySelector('#detail-description'); if(d)d.textContent=c.description; const e=document.querySelector('#detail-eyebrow'); if(e)e.textContent=`${c.priority.toUpperCase()} • ${c.action.toUpperCase()}`; const k=document.querySelector('#detail-kpis'); if(k)k.innerHTML=`<div class="detail-kpi"><strong>${c.count}</strong><span>oameni</span></div><div class="detail-kpi"><strong>${Math.round(c.count/totalSecondi*100)}%</strong><span>din total</span></div>`; const n=document.querySelector('#detail-note'); if(n)n.innerHTML=`<strong>Nume:</strong> ${c.people.slice(0,8).join(', ')}${c.people.length>8?'…':''}`; const pos=new THREE.Vector3(); s.group.getWorldPosition(pos); const off=s.layout.x<0?new THREE.Vector3(-6,6,3):s.layout.x>0?new THREE.Vector3(6,6,3):new THREE.Vector3(0,6.5,8); targetCamera={position:pos.clone().add(off),target:pos.clone().add(new THREE.Vector3(0,1,0))}; needsRender=true}
+function resetView(){targetCamera={position:new THREE.Vector3(0,25,37),target:new THREE.Vector3(0,1,0)}; needsRender=true}
+populateUI(); resetView(); document.querySelector('#reset-view')?.addEventListener('click',resetView)
+renderer.domElement.addEventListener('pointerdown',ev=>{const r=renderer.domElement.getBoundingClientRect(); pointer.x=((ev.clientX-r.left)/r.width)*2-1; pointer.y=-((ev.clientY-r.top)/r.height)*2+1; raycaster.setFromCamera(pointer,camera); const h=raycaster.intersectObjects(clickable,false)[0]; if(h?.object.userData.categoryId)focusDepartment(h.object.userData.categoryId)})
+controls.addEventListener('change',()=>needsRender=true)
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); needsRender=true})
+function animate(){requestAnimationFrame(animate); let moving=false; if(targetCamera){camera.position.lerp(targetCamera.position,.13); controls.target.lerp(targetCamera.target,.13); moving=true; if(camera.position.distanceTo(targetCamera.position)<.06){camera.position.copy(targetCamera.position); controls.target.copy(targetCamera.target); targetCamera=null}} controls.update(); if(needsRender||moving){renderer.render(scene,camera); needsRender=false}}
 animate()
