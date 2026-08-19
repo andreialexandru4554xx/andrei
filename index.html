@@ -7,6 +7,7 @@
   <meta name="description" content="RecruitFlow Business Tower 3D — tur interactiv al operațiunilor, rolurilor și sistemelor companiei." />
   <title>RecruitFlow Business Tower 3D</title>
   <link rel="stylesheet" href="./styles.css?v=20260820-tower10" />
+  <link rel="stylesheet" href="./easy-navigation.css?v=20260820-easy2" />
   <script type="importmap">
     {
       "imports": {
@@ -138,6 +139,10 @@
     </div>
   </div>
 
-  <script type="module" src="./src/main.js?v=20260820-tower10"></script>
+  <script type="module">
+    await import('./src/performance-preflight.js?v=20260820-easy2')
+    await import('./src/main.js?v=20260820-easy2')
+    await import('./src/easy-navigation.js?v=20260820-easy2')
+  </script>
 </body>
 </html>
