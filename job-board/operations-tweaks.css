@@ -1,0 +1,1 @@
+.suite-attention-tab,.suite-command-card.attention{display:none!important}.suite-command-center{grid-template-columns:repeat(4,minmax(140px,1fr))!important}@media(max-width:1000px){.suite-command-center{grid-template-columns:repeat(2,1fr)!important}}@media(max-width:620px){.suite-command-center{grid-template-columns:repeat(2,1fr)!important}}
