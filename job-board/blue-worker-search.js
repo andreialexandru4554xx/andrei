@@ -6,10 +6,12 @@
   Object.assign(I18N.ro, {
     blue_find_workers: '🔎 Găsește muncitori în Blue',
     blue_find_workers_title: 'Deschide Blue cu filtrele acestui job',
+    claim_focus_advice: 'Recomandare: e mai bine să finalizezi poziția pe care o ai deja înainte să renunți la ea și să treci la următorul job.',
   });
   Object.assign(I18N.en, {
     blue_find_workers: '🔎 Find workers in Blue',
     blue_find_workers_title: 'Open Blue with this job’s filters',
+    claim_focus_advice: 'Recommendation: it is better to finish the position you already have before dropping it and moving to the next job.',
   });
 
   const baseJobCardHtml = jobCardHtml;
@@ -70,4 +72,16 @@
     if (!job || !myActiveClaim(job)) return;
     window.open(blueUrl(job), '_blank', 'noopener,noreferrer');
   }, true);
+
+  // Keep claim unlimited and simple. The older focus dialog still detects when
+  // the agent already has an active responsibility, but we turn it into a
+  // non-blocking recommendation and immediately continue the original claim.
+  const focusDialog = $('#multiJobWarningDialog');
+  const continueClaim = $('#continueSecondJob');
+  if (focusDialog && continueClaim) {
+    focusDialog.showModal = function nonBlockingClaimAdvice() {
+      toast(t('claim_focus_advice'), 'info', 5200);
+      window.setTimeout(() => continueClaim.click(), 0);
+    };
+  }
 })();
