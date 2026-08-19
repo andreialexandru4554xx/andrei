@@ -26,4 +26,20 @@
     $('#filledCount').textContent = liveJobs.filter((job) => job.status === 'filled').length;
     $('#mineCount').textContent = liveJobs.filter(myActiveResponsibility).length;
   };
+
+  window.addEventListener('load', () => {
+    if (!document.querySelector('link[data-premium-control-center]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'premium.css?v=2';
+      link.dataset.premiumControlCenter = '1';
+      document.head.append(link);
+    }
+    if (!document.querySelector('script[data-premium-control-center]')) {
+      const script = document.createElement('script');
+      script.src = 'premium.js?v=2';
+      script.dataset.premiumControlCenter = '1';
+      document.body.append(script);
+    }
+  }, { once: true });
 })();
