@@ -81,11 +81,12 @@ async function rpc(name: string, body: Record<string, unknown>) {
 
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get('origin') || '';
-  if (!ALLOWED_ORIGINS.has(origin)) return json('null', { error: 'Origin not allowed' }, 403);
+  const originAllowed = ALLOWED_ORIGINS.has(origin);
+  if (request.method === 'GET') return json(originAllowed ? origin : '*', { preview: PREVIEW_MODE, consentVersion: CONSENT_VERSION, trades: TRADES });
+  if (!originAllowed) return json('null', { error: 'Origin not allowed' }, 403);
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Max-Age': '86400', Vary: 'Origin' } });
   }
-  if (request.method === 'GET') return json(origin, { preview: PREVIEW_MODE, consentVersion: CONSENT_VERSION, trades: TRADES });
   if (request.method !== 'POST') return json(origin, { error: 'Method not allowed' }, 405);
   if (Number(request.headers.get('content-length') || 0) > 12_000) return json(origin, { error: 'Request too large' }, 413);
 
@@ -144,4 +145,3 @@ Deno.serve(async (request: Request) => {
   if (!response.ok) return json(origin, { error: 'Datele nu au putut fi trimise.' }, 502);
   return json(origin, { ok: true });
 });
-
