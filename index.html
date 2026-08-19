@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#060910" />
-  <title>RecruitFlow Business Campus 3D</title>
-  <link rel="stylesheet" href="./styles.css?v=20260819-campus" />
+  <meta name="theme-color" content="#050812" />
+  <meta name="description" content="RecruitFlow Business Tower 3D — tur interactiv al operațiunilor, rolurilor și sistemelor companiei." />
+  <title>RecruitFlow Business Tower 3D</title>
+  <link rel="stylesheet" href="./styles.css?v=20260820-tower10" />
   <script type="importmap">
     {
       "imports": {
@@ -17,73 +18,126 @@
 </head>
 <body>
   <div id="app-shell">
-    <canvas id="world"></canvas>
+    <canvas id="world" aria-label="Turn 3D interactiv cu zece niveluri ale businessului"></canvas>
 
     <header class="topbar glass">
       <div class="brand">
-        <span class="brand-mark">78</span>
+        <span class="brand-mark">10F</span>
         <div>
-          <strong>RecruitFlow Business Campus 3D</strong>
-          <span>Teams • Roles • Calls Center</span>
+          <strong>RecruitFlow Business Tower</strong>
+          <span>Recrutare • Date • Joburi • Companii • Control</span>
         </div>
       </div>
 
-      <nav class="building-nav" aria-label="Clădiri">
-        <button class="building-btn active" data-building="teams">🏢 Teams</button>
-        <button class="building-btn" data-building="roles">🧭 Roles</button>
-        <button class="building-btn" data-building="calls">📞 Calls</button>
-      </nav>
+      <div class="top-actions">
+        <button id="tour-toggle" class="primary-btn">▶ Tur automat</button>
+        <button id="previous-floor" class="ghost-btn" aria-label="Etaj anterior">↓ Etaj</button>
+        <button id="next-floor" class="ghost-btn" aria-label="Etaj următor">↑ Etaj</button>
+        <button id="tower-view" class="ghost-btn">Vedere turn</button>
+      </div>
 
-      <div class="status-row">
+      <div class="visitor-status">
         <span class="status-dot"></span>
-        <span>3 clădiri active</span>
+        <span id="visitor-level">Vizitator • Nivel 1</span>
         <span class="divider"></span>
-        <button id="open-roster" class="ghost-btn">☰ Lista agenților</button>
-        <button id="reset-view" class="ghost-btn">Vedere clădire</button>
+        <strong id="visitor-xp">0 XP</strong>
       </div>
     </header>
 
-    <aside class="sidebar glass">
-      <div class="eyebrow" id="sidebar-eyebrow">TEAMS BUILDING</div>
-      <h1 id="sidebar-title">Open Office</h1>
-      <p class="muted" id="sidebar-copy">Toți cei 78 de agenți, grupați pe echipe, cu numele vizibil deasupra.</p>
-      <div class="kpi-grid" id="global-kpis"></div>
-      <div class="section-heading">
-        <span id="section-label">Echipe</span>
-        <span class="muted small">click pentru focus</span>
+    <aside class="floor-panel glass">
+      <div class="panel-head">
+        <div>
+          <div class="eyebrow">ELEVATOR / BUSINESS MAP</div>
+          <h1>10 niveluri</h1>
+        </div>
+        <span id="floor-progress">0/10</span>
       </div>
-      <div id="zone-list" class="zone-list"></div>
+      <p class="muted compact">Apasă un nivel. Fiecare etaj explică un subdomeniu, rolurile, aplicațiile și traseul operațional.</p>
+      <div id="floor-list" class="floor-list"></div>
     </aside>
 
-    <section class="detail-panel glass" id="detail-panel">
-      <button id="close-detail" class="icon-btn">×</button>
-      <div class="eyebrow" id="detail-eyebrow">SELECTEAZĂ O ZONĂ</div>
-      <h2 id="detail-title">Business Campus</h2>
-      <p id="detail-description" class="muted">Navighează între cele trei clădiri folosind butoanele de sus.</p>
-      <div class="detail-kpis" id="detail-kpis"></div>
-      <div class="detail-note" id="detail-note"></div>
-    </section>
-
-    <section id="roster-panel" class="roster-panel glass">
-      <div class="roster-head">
+    <section class="floor-detail glass" id="floor-detail">
+      <div class="detail-header">
         <div>
-          <div class="eyebrow">LISTĂ COMPLETĂ</div>
-          <h2>Toți cei 78 de agenți</h2>
+          <div class="eyebrow" id="detail-eyebrow">FLOOR 01</div>
+          <h2 id="detail-title">Welcome & Business Map</h2>
+          <p id="detail-subtitle" class="detail-subtitle"></p>
         </div>
-        <button id="close-roster" class="icon-btn roster-close">×</button>
+        <button id="close-detail" class="icon-btn" aria-label="Închide detalii">×</button>
       </div>
-      <div id="roster-content" class="roster-content"></div>
+      <p id="detail-description" class="muted detail-description"></p>
+      <div id="detail-metrics" class="metric-grid"></div>
+
+      <div class="detail-section">
+        <div class="section-label">Fluxul etajului</div>
+        <div id="workflow-steps" class="workflow-steps"></div>
+      </div>
+
+      <div class="detail-columns">
+        <div class="detail-section">
+          <div class="section-label">Ce poți face aici</div>
+          <div id="what-you-can-do" class="chip-list"></div>
+        </div>
+        <div class="detail-section">
+          <div class="section-label">Roluri</div>
+          <div id="floor-roles" class="chip-list"></div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-label">Aplicații și sisteme</div>
+        <div id="floor-apps" class="chip-list"></div>
+      </div>
     </section>
 
-    <div id="roster-backdrop" class="roster-backdrop"></div>
+    <aside class="mission-panel glass">
+      <div class="panel-head mission-head">
+        <div>
+          <div class="eyebrow">BUSINESS QUESTS</div>
+          <h3>Misiuni vizitator</h3>
+        </div>
+        <button id="open-careers" class="tiny-btn">Roluri</button>
+      </div>
+      <div class="progress-track"><span id="mission-progress-bar"></span></div>
+      <div id="mission-list" class="mission-list"></div>
+      <button id="open-guide" class="wide-btn">Deschide ghidul companiei</button>
+    </aside>
 
-    <div class="help glass">
-      <span><b>Clădiri</b> butoanele de sus</span>
-      <span><b>Rotire</b> drag</span>
-      <span><b>Zoom</b> wheel</span>
+    <section id="drawer" class="drawer glass" aria-hidden="true">
+      <div class="drawer-head">
+        <div>
+          <div id="drawer-eyebrow" class="eyebrow">COMPANY GUIDE</div>
+          <h2 id="drawer-title">Cum funcționează compania</h2>
+        </div>
+        <button id="close-drawer" class="icon-btn">×</button>
+      </div>
+      <div class="drawer-tabs">
+        <button class="drawer-tab active" data-drawer-tab="guide">Business</button>
+        <button class="drawer-tab" data-drawer-tab="careers">Roluri</button>
+        <button class="drawer-tab" data-drawer-tab="apps">Aplicații</button>
+        <button class="drawer-tab" data-drawer-tab="glossary">Dicționar</button>
+      </div>
+      <div id="drawer-content" class="drawer-content"></div>
+    </section>
+    <div id="drawer-backdrop" class="drawer-backdrop"></div>
+
+    <div class="bottom-console glass">
+      <div class="console-floor">
+        <span id="console-number">01</span>
+        <div>
+          <strong id="console-title">Welcome</strong>
+          <small id="console-status">Selectează un etaj sau pornește turul</small>
+        </div>
+      </div>
+      <div class="console-meter"><span id="console-meter-bar"></span></div>
+      <div class="console-hints">
+        <span><b>Drag</b> rotire</span>
+        <span><b>Wheel</b> zoom</span>
+        <span><b>Click 3D</b> selectare</span>
+      </div>
     </div>
   </div>
 
-  <script type="module" src="./src/main.js?v=20260819-campus"></script>
+  <script type="module" src="./src/main.js?v=20260820-tower10"></script>
 </body>
 </html>
