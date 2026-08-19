@@ -1,0 +1,83 @@
+name: Apply easy tower exploration engine
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-easy-tower-engine.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  improve-navigation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Patch the tower engine
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/main.js')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  'this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2))',
+                  'this.renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth < 760 ? 1.05 : 1.4))',
+              ),
+              (
+                  'this.renderer.shadowMap.enabled = true',
+                  'this.renderer.shadowMap.enabled = innerWidth >= 760',
+              ),
+              (
+                  'sun.castShadow = true',
+                  'sun.castShadow = innerWidth >= 760',
+              ),
+              (
+                  "this.controls.dampingFactor = 0.055\n    this.controls.minDistance = 8",
+                  "this.controls.dampingFactor = 0.07\n    this.controls.rotateSpeed = 0.58\n    this.controls.zoomSpeed = 1.15\n    this.controls.enablePan = false\n    this.controls.minDistance = 8",
+              ),
+              (
+                  'record.content.visible = active || innerWidth >= 760',
+                  'record.content.visible = active',
+              ),
+              (
+                  "const tower = new BusinessTower3D($('#world'), businessFloors, teams)\ntower.onFloorSelected = floorId => selectFloor(floorId)",
+                  "const tower = new BusinessTower3D($('#world'), businessFloors, teams)\nwindow.__RECRUITFLOW_TOWER__ = tower\nwindow.__RECRUITFLOW_TOWER_DATA__ = { businessFloors, teams }\ntower.onFloorSelected = floorId => selectFloor(floorId)",
+              ),
+              (
+                  "setTimeout(() => tower.towerView(), 900)",
+                  "setTimeout(() => tower.focusFloor('welcome'), 280)",
+              ),
+          ]
+
+          changed = False
+          for old, new in replacements:
+              if new in text:
+                  continue
+              if old not in text:
+                  raise SystemExit(f'Expected source fragment not found: {old[:80]}')
+              text = text.replace(old, new, 1)
+              changed = True
+
+          if changed:
+              path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit navigation improvements
+        shell: bash
+        run: |
+          git config user.name "RecruitFlow Navigation Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/main.js
+          if git diff --cached --quiet; then
+            echo "Tower engine is already optimized"
+          else
+            git commit -m "Make tower easier and faster to explore"
+            git push
+          fi
