@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
-  <meta name="description" content="RecruitFlow Job Board — postează, revendică și închide rapid joburile de recrutare.">
+  <meta name="description" content="RecruitFlow Job Board — post, claim and fill recruitment jobs quickly.">
   <title>RecruitFlow — Job Board</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
   <header class="topbar">
@@ -15,33 +15,34 @@
       <span><strong>RecruitFlow</strong><small>JOB BOARD</small></span>
     </a>
     <div class="top-actions">
+      <button id="languageButton" class="agent-button" type="button" title="English">EN</button>
       <button id="agentButton" class="agent-button" type="button" title="Schimbă agentul" hidden>
         <span class="online-dot"></span><span id="agentName">Agent</span>
       </button>
       <button id="refreshButton" class="icon-button" type="button" aria-label="Actualizează lista" title="Actualizează">↻</button>
-      <button id="addButton" class="primary compact" type="button">＋ Postează job</button>
+      <button id="addButton" class="primary compact" type="button" data-i18n="add_job">＋ Postează job</button>
     </div>
   </header>
 
   <main>
     <section class="hero">
       <div class="hero-copy">
-        <span class="eyebrow">CENTRUL DE JOBURI AL ECHIPEI</span>
-        <h1>Postează. Claim. Găsește omul. <em>Gata.</em></h1>
-        <p>Lipești anunțul, aplicația extrage automat informațiile, iar fiecare second/recruiter poate revendica un job fără să se calce cu altcineva.</p>
+        <span class="eyebrow" data-i18n="hero_eyebrow">CENTRUL DE JOBURI AL ECHIPEI</span>
+        <h1 data-i18n-html="hero_title">Postează. Claim. Găsește omul. <em>Gata.</em></h1>
+        <p data-i18n="hero_description">Lipești anunțul, aplicația extrage automat informațiile, iar fiecare second/recruiter poate revendica un job fără să se calce cu altcineva.</p>
       </div>
-      <div class="stats" aria-label="Rezumat joburi">
+      <div class="stats" aria-label="Job summary">
         <button class="stat-card" type="button" data-stat-filter="open">
-          <span class="stat-icon open-icon">○</span><strong id="openCount">0</strong><small>OPEN</small>
+          <span class="stat-icon open-icon">○</span><strong id="openCount">0</strong><small data-i18n="stat_open">OPEN</small>
         </button>
         <button class="stat-card" type="button" data-stat-filter="claimed">
-          <span class="stat-icon claimed-icon">↗</span><strong id="claimedCount">0</strong><small>CLAIMED</small>
+          <span class="stat-icon claimed-icon">↗</span><strong id="claimedCount">0</strong><small data-i18n="stat_claimed">CLAIMED</small>
         </button>
         <button class="stat-card" type="button" data-stat-filter="filled">
-          <span class="stat-icon filled-icon">✓</span><strong id="filledCount">0</strong><small>OM GĂSIT</small>
+          <span class="stat-icon filled-icon">✓</span><strong id="filledCount">0</strong><small data-i18n="stat_found">OM GĂSIT</small>
         </button>
         <button class="stat-card" type="button" data-stat-filter="mine">
-          <span class="stat-icon mine-icon">★</span><strong id="mineCount">0</strong><small>ALE MELE</small>
+          <span class="stat-icon mine-icon">★</span><strong id="mineCount">0</strong><small data-i18n="stat_mine">ALE MELE</small>
         </button>
       </div>
     </section>
@@ -49,37 +50,32 @@
     <section class="workspace">
       <div class="section-heading">
         <div>
-          <span class="eyebrow dark">LIVE BOARD</span>
-          <h2>Joburile echipei</h2>
+          <span class="eyebrow dark" data-i18n="live_board">LIVE BOARD</span>
+          <h2 data-i18n="team_jobs">Joburile echipei</h2>
         </div>
-        <span id="lastUpdated" class="last-updated">Neconectat</span>
+        <span id="lastUpdated" class="last-updated" data-i18n="not_updated">Neactualizat</span>
       </div>
 
       <div class="toolbar">
         <label class="search-box">
           <span>⌕</span>
-          <input id="searchInput" type="search" placeholder="Caută meserie, locație, postcode, companie…" autocomplete="off">
+          <input id="searchInput" type="search" placeholder="Caută meserie, locație, postcode, companie…" data-i18n-placeholder="search_placeholder" autocomplete="off">
         </label>
-        <select id="statusFilter" aria-label="Filtrează după status">
-          <option value="active">Active: Open + Claimed</option>
-          <option value="all">Toate joburile</option>
-          <option value="open">Open</option>
-          <option value="claimed">Claimed</option>
-          <option value="filled">Om găsit</option>
-          <option value="closed">Închise</option>
-          <option value="mine">Joburile mele</option>
+        <select id="statusFilter" aria-label="Filter by status">
+          <option value="active" data-i18n="status_active">Active: Open + Claimed</option>
+          <option value="all" data-i18n="status_all">Toate joburile</option>
+          <option value="open" data-i18n="status_open">Open</option>
+          <option value="claimed" data-i18n="status_claimed">Claimed</option>
+          <option value="filled" data-i18n="status_filled">Om găsit</option>
+          <option value="closed" data-i18n="status_closed">Închise</option>
+          <option value="mine" data-i18n="status_mine">Joburile mele</option>
         </select>
-        <select id="priorityFilter" aria-label="Filtrează după prioritate">
-          <option value="all">Toate prioritățile</option>
-          <option value="urgent">Urgente</option>
-          <option value="normal">Normale</option>
-          <option value="low">Prioritate mică</option>
+        <select id="priorityFilter" aria-label="Filter by priority">
+          <option value="all" data-i18n="priority_all">Toate prioritățile</option>
+          <option value="urgent" data-i18n="priority_urgent_plural">Urgente</option>
+          <option value="normal" data-i18n="priority_normal_plural">Normale</option>
+          <option value="low" data-i18n="priority_low_plural">Prioritate mică</option>
         </select>
-      </div>
-
-      <div id="connectionBanner" class="connection-banner" hidden>
-        <span>⚠</span><span id="connectionText">Conexiunea a fost întreruptă.</span>
-        <button id="retryButton" type="button">Reîncearcă</button>
       </div>
 
       <section id="jobsGrid" class="jobs-grid" aria-live="polite" aria-busy="false"></section>
@@ -88,32 +84,31 @@
 
   <footer>
     <strong>RecruitFlow Job Board</strong>
-    <span>Acces fără cod · Actualizare automată · Mobile friendly</span>
+    <span data-i18n="footer_text">Acces fără cod · Română / English · Actualizare automată · Mobile friendly</span>
   </footer>
 
   <dialog id="accessDialog" class="access-dialog">
     <form id="accessForm" class="dialog-form access-form">
       <div class="access-logo">RF</div>
-      <span class="eyebrow dark">IDENTIFICARE AGENT</span>
-      <h2>Spune-ne cine ești</h2>
-      <p>Introdu doar numele tău, ca să se vadă cine postează și cine revendică fiecare job.</p>
-      <label>Numele tău / numele secondului
-        <input id="accessAgent" name="agent" type="text" maxlength="80" autocomplete="name" placeholder="Ex: Andrei" required>
+      <span class="eyebrow dark" data-i18n="access_eyebrow">IDENTIFICARE AGENT</span>
+      <h2 data-i18n="access_title">Spune-ne cine ești</h2>
+      <p data-i18n="access_description">Introdu doar numele tău, ca să se vadă cine postează și cine revendică fiecare job.</p>
+      <label><span data-i18n="agent_name_label">Numele tău / numele secondului</span>
+        <input id="accessAgent" name="agent" type="text" maxlength="80" autocomplete="name" placeholder="Ex: Andrei" data-i18n-placeholder="agent_name_placeholder" required>
       </label>
-      <input id="accessCode" name="code" type="hidden" value="public">
       <p id="accessError" class="form-error" role="alert" hidden></p>
-      <button class="primary wide" type="submit"><span>Continuă</span><span>→</span></button>
-      <small>Nu este necesar niciun cod. Pe un telefon comun, apasă pe numele agentului pentru a schimba utilizatorul.</small>
+      <button class="primary wide" type="submit"><span data-i18n="continue_button">Continuă</span><span>→</span></button>
+      <small data-i18n="access_hint">Nu este necesar niciun cod. Pe un telefon comun, apasă pe numele agentului pentru a schimba utilizatorul.</small>
     </form>
   </dialog>
 
   <dialog id="jobDialog" class="job-dialog">
     <form id="jobForm" class="dialog-form">
-      <button class="dialog-close" type="button" data-close-dialog="jobDialog" aria-label="Închide">×</button>
+      <button class="dialog-close" type="button" data-close-dialog="jobDialog" aria-label="Close">×</button>
       <div class="dialog-title-row">
         <div>
-          <span class="eyebrow dark">JOB NOU</span>
-          <h2 id="jobDialogTitle">Postează un job</h2>
+          <span class="eyebrow dark" data-i18n="new_job">JOB NOU</span>
+          <h2 id="jobDialogTitle" data-i18n="post_job_title">Postează un job</h2>
         </div>
         <span id="formModeBadge" class="mode-badge">CREATE</span>
       </div>
@@ -122,92 +117,92 @@
       <section class="paste-panel">
         <div class="paste-heading">
           <div>
-            <strong>⚡ Copy–paste anunțul</strong>
-            <small>Extragem automat meseria, locația, postcode-ul, rata și restul datelor.</small>
+            <strong data-i18n="paste_title">⚡ Copy–paste anunțul</strong>
+            <small data-i18n="paste_help">Extragem automat meseria, locația, postcode-ul, rata și restul datelor.</small>
           </div>
-          <button id="parseButton" class="secondary" type="button">Completează automat</button>
+          <button id="parseButton" class="secondary" type="button" data-i18n="parse_button">Completează automat</button>
         </div>
-        <textarea id="sourceText" name="source_text" rows="5" maxlength="10000" placeholder="Ex: Urgently need 4 dryliners in SW1A 1AA, London. £220/day, start Monday. Call John 07123 456789…"></textarea>
+        <textarea id="sourceText" name="source_text" rows="5" maxlength="10000" placeholder="Ex: Urgently need 4 dryliners in SW1A 1AA, London. £220/day, start Monday…" data-i18n-placeholder="source_placeholder"></textarea>
       </section>
 
       <div class="form-grid">
-        <label>Meserie / trade <b>*</b>
-          <input id="tradeInput" name="trade" type="text" maxlength="120" list="tradeOptions" placeholder="Ex: Electrician" required>
+        <label><span><span data-i18n="field_trade">Meserie / trade</span> <b>*</b></span>
+          <input id="tradeInput" name="trade" type="text" maxlength="120" list="tradeOptions" placeholder="Ex: Electrician" data-i18n-placeholder="trade_placeholder" required>
         </label>
-        <label>Locație <b>*</b>
-          <input id="locationInput" name="location" type="text" maxlength="160" placeholder="Ex: Central London" required>
+        <label><span data-i18n="field_location">Locație</span>
+          <input id="locationInput" name="location" type="text" maxlength="160" placeholder="Ex: Central London" data-i18n-placeholder="location_placeholder">
         </label>
-        <label>Postcode
-          <input id="postcodeInput" name="postcode" type="text" maxlength="16" autocomplete="postal-code" placeholder="Ex: SW1A 1AA">
+        <label><span data-i18n="field_postcode">Postcode</span>
+          <input id="postcodeInput" name="postcode" type="text" maxlength="16" autocomplete="postal-code" placeholder="Ex: SW1A 1AA" data-i18n-placeholder="postcode_placeholder">
         </label>
-        <label>Rate
-          <input id="rateInput" name="rate" type="text" maxlength="80" placeholder="Ex: £220/day">
+        <label><span data-i18n="field_rate">Rate</span>
+          <input id="rateInput" name="rate" type="text" maxlength="80" placeholder="Ex: £220/day" data-i18n-placeholder="rate_placeholder">
         </label>
-        <label>Nr. muncitori
+        <label><span data-i18n="field_workers">Nr. muncitori</span>
           <input id="workersInput" name="workers_needed" type="number" min="1" max="100" value="1">
         </label>
-        <label>Data de start
+        <label><span data-i18n="field_start">Data de start</span>
           <input id="startDateInput" name="start_date" type="date">
         </label>
-        <label>Prioritate
+        <label><span data-i18n="field_priority">Prioritate</span>
           <select id="priorityInput" name="priority">
-            <option value="normal">Normală</option>
-            <option value="urgent">Urgentă</option>
-            <option value="low">Mică</option>
+            <option value="normal" data-i18n="priority_normal">Normală</option>
+            <option value="urgent" data-i18n="priority_urgent">Urgentă</option>
+            <option value="low" data-i18n="priority_low">Mică</option>
           </select>
         </label>
-        <label>Tip contract
+        <label><span data-i18n="field_contract">Tip contract</span>
           <select id="contractTypeInput" name="contract_type">
-            <option value="">Nespecificat</option>
+            <option value="" data-i18n="contract_unspecified">Nespecificat</option>
             <option value="Temporary">Temporary</option>
             <option value="Permanent">Permanent</option>
             <option value="Self-employed">Self-employed</option>
             <option value="Subcontract">Subcontract</option>
           </select>
         </label>
-        <label>Durată
-          <input id="durationInput" name="duration" type="text" maxlength="100" placeholder="Ex: 3 months / ongoing">
+        <label><span data-i18n="field_duration">Durată</span>
+          <input id="durationInput" name="duration" type="text" maxlength="100" placeholder="Ex: 3 months / ongoing" data-i18n-placeholder="duration_placeholder">
         </label>
-        <label>Program / shift
-          <input id="shiftInput" name="shift" type="text" maxlength="100" placeholder="Ex: 08:00–17:00 / nights">
+        <label><span data-i18n="field_shift">Program / shift</span>
+          <input id="shiftInput" name="shift" type="text" maxlength="100" placeholder="Ex: 08:00–17:00 / nights" data-i18n-placeholder="shift_placeholder">
         </label>
-        <label>Companie
+        <label><span data-i18n="field_company">Companie</span>
           <input id="companyInput" name="company_name" type="text" maxlength="180" autocomplete="organization">
         </label>
-        <label>Referință job
-          <input id="referenceInput" name="job_reference" type="text" maxlength="100" placeholder="Ex: JOB-1842">
+        <label><span data-i18n="field_reference">Referință job</span>
+          <input id="referenceInput" name="job_reference" type="text" maxlength="100" placeholder="Ex: JOB-1842" data-i18n-placeholder="reference_placeholder">
         </label>
-        <label>Nume contact
+        <label><span data-i18n="field_contact_name">Nume contact</span>
           <input id="contactNameInput" name="contact_name" type="text" maxlength="120" autocomplete="name">
         </label>
-        <label>Telefon contact
+        <label><span data-i18n="field_contact_phone">Telefon contact</span>
           <input id="contactPhoneInput" name="contact_phone" type="tel" maxlength="50" autocomplete="tel">
         </label>
       </div>
-      <label>Detalii / cerințe
-        <textarea id="descriptionInput" name="description" rows="4" maxlength="5000" placeholder="CSCS, tools, experiență, parking, ce trebuie să știe recruiterul…"></textarea>
+      <label><span data-i18n="field_details">Detalii / cerințe</span>
+        <textarea id="descriptionInput" name="description" rows="4" maxlength="5000" placeholder="CSCS, tools, experiență, parking…" data-i18n-placeholder="details_placeholder"></textarea>
       </label>
 
       <div class="form-actions">
-        <button class="ghost" type="button" data-close-dialog="jobDialog">Renunță</button>
-        <button id="saveJobButton" class="primary" type="submit">Publică jobul</button>
+        <button class="ghost" type="button" data-close-dialog="jobDialog" data-i18n="cancel">Renunță</button>
+        <button id="saveJobButton" class="primary" type="submit" data-i18n="publish_job">Publică jobul</button>
       </div>
     </form>
   </dialog>
 
   <dialog id="foundDialog" class="small-dialog">
     <form id="foundForm" class="dialog-form">
-      <button class="dialog-close" type="button" data-close-dialog="foundDialog" aria-label="Închide">×</button>
+      <button class="dialog-close" type="button" data-close-dialog="foundDialog" aria-label="Close">×</button>
       <span class="success-symbol">✓</span>
-      <h2>Ai găsit omul?</h2>
-      <p>Jobul va fi mutat la <strong>OM GĂSIT</strong> și va rămâne în istoric.</p>
+      <h2 data-i18n="found_title">Ai găsit omul?</h2>
+      <p data-i18n-html="found_description">Jobul va fi mutat la <strong>OM GĂSIT</strong> și va rămâne în istoric.</p>
       <input id="foundJobId" type="hidden">
-      <label>Notă opțională
-        <textarea id="foundNote" rows="4" maxlength="1500" placeholder="Ex: Ion confirmat, începe luni. Evită date personale inutile."></textarea>
+      <label><span data-i18n="found_note">Notă opțională</span>
+        <textarea id="foundNote" rows="4" maxlength="1500" placeholder="Ex: Ion confirmat, începe luni." data-i18n-placeholder="found_note_placeholder"></textarea>
       </label>
       <div class="form-actions">
-        <button class="ghost" type="button" data-close-dialog="foundDialog">Renunță</button>
-        <button class="success-button" type="submit">✓ Marchează „Om găsit”</button>
+        <button class="ghost" type="button" data-close-dialog="foundDialog" data-i18n="cancel">Renunță</button>
+        <button class="success-button" type="submit" data-i18n="found_confirm">✓ Marchează „Om găsit”</button>
       </div>
     </form>
   </dialog>
@@ -225,16 +220,8 @@
   </datalist>
 
   <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
-  <div id="loadingOverlay" class="loading-overlay" hidden><span class="spinner"></span><strong>Se salvează…</strong></div>
+  <div id="loadingOverlay" class="loading-overlay" hidden><span class="spinner"></span><strong data-i18n="saving">Se salvează…</strong></div>
 
-  <script>
-    document.addEventListener('submit', function (event) {
-      if (event.target && event.target.id === 'accessForm') {
-        var field = document.getElementById('accessCode');
-        if (field) field.value = 'public';
-      }
-    }, true);
-  </script>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
