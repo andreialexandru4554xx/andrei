@@ -2,7 +2,7 @@
 
 const API_URL = 'https://lmztoiikbgcaeztdweov.supabase.co/functions/v1/job-board-api';
 const PUBLISHABLE_KEY = 'sb_publishable_hNcUMCduD_AAjBTgJvjqfg_BNJOLk6Z';
-const SESSION_KEY = 'recruitflow_job_board_session_v3';
+const SESSION_KEY = 'recruitflow_job_board_session_v4';
 const LANGUAGE_KEY = 'recruitflow_job_board_language';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -11,6 +11,7 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const state = {
   jobs: [],
   agent: '',
+  email: '',
   status: 'active',
   priority: 'all',
   search: '',
@@ -34,8 +35,9 @@ const I18N = {
     priority_all: 'Toate prioritățile', priority_urgent_plural: 'Urgente', priority_normal_plural: 'Normale', priority_low_plural: 'Prioritate mică',
     footer_text: 'Acces fără cod · Română / English · Actualizare automată · Mobile friendly',
     access_eyebrow: 'IDENTIFICARE AGENT', access_title: 'Spune-ne cine ești',
-    access_description: 'Introdu doar numele tău, ca să se vadă cine postează și cine revendică fiecare job.',
-    agent_name_label: 'Numele tău / numele secondului', agent_name_placeholder: 'Ex: Andrei', continue_button: 'Continuă',
+    access_description: 'Introdu numele și emailul folosit în Blue. Emailul leagă automat claim-urile de contul tău RecruitFlow.',
+    agent_name_label: 'Numele tău / numele secondului', agent_name_placeholder: 'Ex: Andrei',
+    agent_email_label: 'Emailul folosit în Blue', agent_email_placeholder: 'Ex: nume@companie.com', continue_button: 'Continuă',
     access_hint: 'Nu este necesar niciun cod. Pe un telefon comun, apasă pe numele agentului pentru a schimba utilizatorul.',
     new_job: 'JOB NOU', post_job_title: 'Postează un job', edit_job_title: 'Editează jobul',
     paste_title: '⚡ Copy–paste anunțul', paste_help: 'Extragem automat meseria, locația, postcode-ul, rata și restul datelor.',
@@ -83,8 +85,9 @@ const I18N = {
     priority_all: 'All priorities', priority_urgent_plural: 'Urgent', priority_normal_plural: 'Normal', priority_low_plural: 'Low priority',
     footer_text: 'No access code · Romanian / English · Auto refresh · Mobile friendly',
     access_eyebrow: 'AGENT IDENTIFICATION', access_title: 'Tell us who you are',
-    access_description: 'Enter your name so the board records who posts and who claims each job.',
-    agent_name_label: 'Your name / recruiter name', agent_name_placeholder: 'e.g. Andrei', continue_button: 'Continue',
+    access_description: 'Enter your name and the email used in Blue. Your email automatically links claims to your RecruitFlow account.',
+    agent_name_label: 'Your name / recruiter name', agent_name_placeholder: 'e.g. Andrei',
+    agent_email_label: 'Email used in Blue', agent_email_placeholder: 'e.g. name@company.com', continue_button: 'Continue',
     access_hint: 'No access code is required. On a shared phone, tap the agent name to switch users.',
     new_job: 'NEW JOB', post_job_title: 'Post a job', edit_job_title: 'Edit job',
     paste_title: '⚡ Paste the advert', paste_help: 'We automatically extract the trade, location, postcode, rate and other details.',
@@ -210,8 +213,8 @@ function setBusy(busy, label = t('saving')) {
   $('#loadingOverlay').hidden = !busy;
 }
 
-function saveSession() { localStorage.setItem(SESSION_KEY, JSON.stringify({ agent: state.agent })); }
-function clearSession() { state.agent = ''; localStorage.removeItem(SESSION_KEY); }
+function saveSession() { localStorage.setItem(SESSION_KEY, JSON.stringify({ agent: state.agent, email: state.email })); }
+function clearSession() { state.agent = ''; state.email = ''; localStorage.removeItem(SESSION_KEY); }
 
 async function api(action, payload = {}, { timeout = 20000 } = {}) {
   const controller = new AbortController();
@@ -220,7 +223,7 @@ async function api(action, payload = {}, { timeout = 20000 } = {}) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: PUBLISHABLE_KEY },
-      body: JSON.stringify({ action, lang: state.lang, ...payload }),
+      body: JSON.stringify({ action, lang: state.lang, agent_email: state.email, ...payload }),
       signal: controller.signal,
     });
     const data = await response.json().catch(() => ({}));
@@ -265,16 +268,18 @@ function updateLastUpdated() {
   $('#lastUpdated').textContent = state.lastLoaded ? t('updated', { time: relativeTime(state.lastLoaded) }) : t('not_updated');
 }
 
-function showAccessDialog(prefillAgent = '') {
+function showAccessDialog(prefillAgent = '', prefillEmail = '') {
   const dialog = $('#accessDialog');
   $('#accessAgent').value = prefillAgent || state.agent || '';
+  $('#accessEmail').value = prefillEmail || state.email || '';
   $('#accessError').hidden = true;
   if (!dialog.open) dialog.showModal();
   window.setTimeout(() => $('#accessAgent').focus(), 80);
 }
 
-async function establishSession(agent) {
+async function establishSession(agent, email) {
   state.agent = agent.trim();
+  state.email = email.trim().toLocaleLowerCase();
   await api('session');
   saveSession();
   $('#agentName').textContent = state.agent;
@@ -582,11 +587,12 @@ async function performAction(action, id, extra = {}) {
 $('#accessForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   const agent = $('#accessAgent').value.trim();
+  const email = $('#accessEmail').value.trim().toLocaleLowerCase();
   $('#accessError').hidden = true;
   const submit = event.submitter || $('button[type="submit"]', event.currentTarget);
   if (submit) submit.disabled = true;
   try {
-    await establishSession(agent);
+    await establishSession(agent, email);
     toast(t('welcome', { name: agent }), 'success');
   } catch (error) {
     clearSession();
@@ -606,9 +612,10 @@ $('#addButton').addEventListener('click', openCreateDialog);
 $('#refreshButton').addEventListener('click', () => { state.loadErrorShown = false; loadJobs({ silent: false }); });
 $('#agentButton').addEventListener('click', () => {
   const previous = state.agent;
+  const previousEmail = state.email;
   clearSession();
   $('#agentButton').hidden = true;
-  showAccessDialog(previous);
+  showAccessDialog(previous, previousEmail);
 });
 
 $('#searchInput').addEventListener('input', (event) => { state.search = event.target.value; render(); });
@@ -695,8 +702,8 @@ window.setInterval(updateLastUpdated, 15000);
   renderLoading();
   try {
     const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-    if (saved?.agent) {
-      await establishSession(saved.agent);
+    if (saved?.agent && saved?.email) {
+      await establishSession(saved.agent, saved.email);
       return;
     }
   } catch {
