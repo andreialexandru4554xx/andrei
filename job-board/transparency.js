@@ -24,10 +24,10 @@
     focus_warning_eyebrow: 'AVERTISMENT DE FOCUS',
     focus_warning_title: 'Ai deja un job activ',
     focus_warning_text: 'Recomandarea este să lucrezi pe un singur job până îți termini responsabilitatea, ca să nu îți împarți atenția și să scadă viteza de recrutare.',
-    focus_warning_exception: 'Dacă al doilea job este o excepție și știi că poți acoperi responsabil ambele joburi, poți continua.',
+    focus_warning_exception: 'Dacă următorul job este o excepție și știi că poți acoperi responsabil toate joburile active, poți continua.',
     focus_current_jobs: 'Lucrezi deja la:',
-    focus_stay_one: 'Rămân la un singur job',
-    focus_continue: 'Este o excepție — claim și al doilea',
+    focus_stay_one: 'Rămân la joburile actuale',
+    focus_continue: 'Este o excepție — claim și următorul',
     active_assignment_line: '{trade} · {remaining} muncitori rămași pentru tine',
   });
 
@@ -54,10 +54,10 @@
     focus_warning_eyebrow: 'FOCUS WARNING',
     focus_warning_title: 'You already have an active job',
     focus_warning_text: 'The recommendation is to work on one job until you finish your responsibility, so your attention is not split and recruitment speed does not drop.',
-    focus_warning_exception: 'If the second job is a genuine exception and you know you can responsibly cover both, you can continue.',
+    focus_warning_exception: 'If the next job is a genuine exception and you know you can responsibly cover all your active jobs, you can continue.',
     focus_current_jobs: 'You are already working on:',
-    focus_stay_one: 'Stay on one job',
-    focus_continue: 'This is an exception — claim the second',
+    focus_stay_one: 'Keep my current jobs',
+    focus_continue: 'This is an exception — claim the next one',
     active_assignment_line: '{trade} · {remaining} workers remaining for you',
   });
 
@@ -94,10 +94,10 @@
         <p data-i18n="focus_warning_text">Recomandarea este să lucrezi pe un singur job până îți termini responsabilitatea.</p>
         <strong class="focus-current-label" data-i18n="focus_current_jobs">Lucrezi deja la:</strong>
         <div id="focusActiveJobs" class="focus-active-jobs"></div>
-        <p class="focus-exception" data-i18n="focus_warning_exception">Dacă este o excepție, poți continua.</p>
+        <p class="focus-exception" data-i18n="focus_warning_exception">Dacă următorul job este o excepție, poți continua.</p>
         <div class="form-actions">
-          <button class="ghost" type="button" id="stayOnOneJob" data-i18n="focus_stay_one">Rămân la un singur job</button>
-          <button class="warning-continue-button" type="button" id="continueSecondJob" data-i18n="focus_continue">Este o excepție — claim și al doilea</button>
+          <button class="ghost" type="button" id="stayOnOneJob" data-i18n="focus_stay_one">Rămân la joburile actuale</button>
+          <button class="warning-continue-button" type="button" id="continueSecondJob" data-i18n="focus_continue">Este o excepție — claim și următorul</button>
         </div>
       </div>
     </dialog>`);
