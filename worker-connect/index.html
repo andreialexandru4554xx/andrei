@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#102f2a">
+  <meta name="description" content="Worker Connect UK — înscriere pentru oportunități în construcții în UK.">
+  <title>Worker Connect UK</title>
+  <link rel="stylesheet" href="./styles.css?v=1">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="intro" aria-labelledby="page-title">
+      <a class="brand" href="./" aria-label="Worker Connect UK — început">
+        <span class="brand-mark" aria-hidden="true">WC</span>
+        <span>Worker Connect UK</span>
+      </a>
+      <div class="intro-copy">
+        <p class="eyebrow">CONSTRUCȚII · UNITED KINGDOM</p>
+        <h1 id="page-title">Înscriere pentru joburi în construcții în UK</h1>
+        <p>Completează datele și spune-ne ce meserii practici. Te vom contacta când avem o oportunitate potrivită în zona ta.</p>
+        <p class="notice">Înscrierea este gratuită și nu garantează un loc de muncă.</p>
+      </div>
+      <ul class="trust-list" aria-label="Cum funcționează">
+        <li><span>1</span>Date minime</li>
+        <li><span>2</span>Verificare umană</li>
+        <li><span>3</span>Contact doar pentru oportunități</li>
+      </ul>
+    </section>
+
+    <section class="form-card" aria-labelledby="form-title">
+      <div class="preview-banner" role="status">
+        <strong>Preview sigur</strong>
+        <span>Datele de mai jos sunt demonstrative. Trimiterea reală este blocată până la publicarea informațiilor legale.</span>
+      </div>
+
+      <div class="form-heading">
+        <div>
+          <p class="eyebrow">FORMULAR MVP</p>
+          <h2 id="form-title">Datele muncitorului</h2>
+        </div>
+        <span class="required-note">* obligatoriu</span>
+      </div>
+
+      <form id="worker-form" novalidate>
+        <div class="field">
+          <label for="full-name">Nume complet <span>*</span></label>
+          <input id="full-name" name="fullName" type="text" autocomplete="name" minlength="2" maxlength="80" value="Ion Exemplu" disabled required>
+          <small>Exemplu demonstrativ</small>
+          <p class="error" id="full-name-error"></p>
+        </div>
+
+        <div class="field">
+          <label for="phone">Număr de telefon UK <span>*</span></label>
+          <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" value="07123 000000" disabled required>
+          <small>Acceptă 07…, +44 7… sau 0044 7…</small>
+          <p class="error" id="phone-error"></p>
+        </div>
+
+        <div class="field">
+          <label for="postcode">Postcode complet <span>*</span></label>
+          <input id="postcode" name="postcode" type="text" autocomplete="postal-code" value="NW1 6XE" disabled required>
+          <small>Exemplu: NW1 6XE</small>
+          <p class="error" id="postcode-error"></p>
+        </div>
+
+        <fieldset class="field trade-field">
+          <legend>Alege una sau mai multe meserii <span>*</span></legend>
+          <div class="trade-picker" id="trade-picker" aria-describedby="trade-help">
+            <span class="trade-chip">Carpenter</span>
+            <span class="trade-chip">Multi Trader</span>
+          </div>
+          <small id="trade-help">Caută și selectează maximum 5. Selectorul este blocat în preview.</small>
+          <p class="error" id="trades-error"></p>
+        </fieldset>
+
+        <label class="consent-row">
+          <input name="consent" type="checkbox" disabled>
+          <span>Sunt de acord ca Worker Connect UK să folosească datele introduse pentru a mă contacta prin telefon, SMS sau WhatsApp despre oportunități de muncă. Pot să îmi retrag acordul și să cer ștergerea datelor oricând.</span>
+        </label>
+
+        <div class="privacy-line">
+          <a href="./privacy.html">Vezi Politica de confidențialitate</a>
+          <span>·</span>
+          <span>Corectarea sau ștergerea datelor va fi disponibilă la activare</span>
+        </div>
+
+        <input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button id="submit-button" type="submit" disabled>Trimiterea este blocată în preview</button>
+        <p class="form-status" id="form-status" aria-live="polite"></p>
+      </form>
+
+      <div class="activation-note">
+        <strong>MVP pregătit pentru activare</strong>
+        <p>După confirmarea operatorului de date, contactului de confidențialitate și perioadei de păstrare, formularul poate fi trecut din preview în modul live.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Worker Connect UK</span>
+    <nav aria-label="Linkuri legale">
+      <a href="./privacy.html">Politica de confidențialitate</a>
+      <span>Contact — disponibil la activare</span>
+    </nav>
+  </footer>
+  <script src="./app.js?v=1" defer></script>
+</body>
+</html>
