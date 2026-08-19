@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { secondiCategories } from './data.js'
+import { realOffices, knownSecondNames, officeRosterCount } from './office-data.js'
 
 const canvas = document.querySelector('#office-world')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
@@ -9,133 +9,125 @@ renderer.setSize(innerWidth, innerHeight)
 renderer.shadowMap.enabled = true
 renderer.outputColorSpace = THREE.SRGBColorSpace
 renderer.toneMapping = THREE.ACESFilmicToneMapping
-renderer.toneMappingExposure = 1.1
+renderer.toneMappingExposure = 1.08
 
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x0a1522)
-scene.fog = new THREE.Fog(0x0a1522, 35, 75)
+scene.fog = new THREE.Fog(0x0a1522, 45, 110)
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, .1, 200)
-camera.position.set(24, 19, 28)
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, .1, 260)
+camera.position.set(35, 30, 42)
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
 controls.target.set(0, 1, 0)
-controls.minDistance = 10
-controls.maxDistance = 55
+controls.minDistance = 12
+controls.maxDistance = 85
 controls.maxPolarAngle = Math.PI * .48
 
 scene.add(new THREE.HemisphereLight(0xdcecff, 0x111827, 2.0))
-const sun = new THREE.DirectionalLight(0xffffff, 3.1)
-sun.position.set(12, 22, 10)
+const sun = new THREE.DirectionalLight(0xffffff, 3.0)
+sun.position.set(18, 28, 12)
 sun.castShadow = true
 sun.shadow.mapSize.set(2048, 2048)
 scene.add(sun)
 
 function box(w,h,d,color,opts={}){
-  const m = new THREE.MeshStandardMaterial({color,roughness:opts.roughness??.6,metalness:opts.metalness??.08,transparent:opts.transparent??false,opacity:opts.opacity??1})
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m)
-  mesh.castShadow = opts.castShadow ?? true
-  mesh.receiveShadow = opts.receiveShadow ?? true
+  const m=new THREE.MeshStandardMaterial({color,roughness:opts.roughness??.62,metalness:opts.metalness??.08,transparent:opts.transparent??false,opacity:opts.opacity??1})
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m)
+  mesh.castShadow=opts.castShadow??true
+  mesh.receiveShadow=opts.receiveShadow??true
   return mesh
 }
 
-function spriteLabel(text,color,small=false){
-  const c=document.createElement('canvas'); c.width=600; c.height=small?150:220
+function label(text,color='#8fb8ff',small=false){
+  const c=document.createElement('canvas'); c.width=700; c.height=small?150:220
   const x=c.getContext('2d'); x.clearRect(0,0,c.width,c.height)
-  x.fillStyle='rgba(7,12,20,.86)'; x.roundRect(14,14,c.width-28,c.height-28,26); x.fill()
+  x.fillStyle='rgba(7,12,20,.9)'; x.roundRect(14,14,c.width-28,c.height-28,26); x.fill()
   x.strokeStyle=color; x.lineWidth=small?3:5; x.stroke()
-  x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#fff'; x.font=small?'800 40px Arial':'900 58px Arial'; x.fillText(text,c.width/2,c.height/2)
+  x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#fff'; x.font=small?'800 38px Arial':'900 52px Arial'; x.fillText(text,c.width/2,c.height/2)
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace
-  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false})); s.scale.set(small?1.45:2.65,small?.36:.82,1); return s
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false})); s.scale.set(small?1.5:3.1,small?.34:.86,1); return s
 }
 
-const floor=box(38,.25,30,0x152235,{roughness:.88}); floor.position.y=-.12; scene.add(floor)
-const aisle=box(4,.03,28,0x203d64,{roughness:.95}); aisle.position.y=.02; scene.add(aisle)
+function roleFor(name){ return knownSecondNames.has(name) ? 'SECOND' : 'DE STABILIT' }
+function roleColor(role){ return role==='SECOND' ? '#44a0ff' : '#9ba6b6' }
 
-for(const x of [-19,19]){const wall=box(.12,6,30,0x8ab8e8,{transparent:true,opacity:.16,roughness:.08}); wall.position.set(x,3,0); scene.add(wall)}
-const back=box(38,6,.16,0x21344f,{roughness:.8}); back.position.set(0,3,-15); scene.add(back)
+function person(role){
+  const g=new THREE.Group(); const color=role==='SECOND'?0x44a0ff:0x65758a
+  const body=new THREE.Mesh(new THREE.CapsuleGeometry(.15,.4,5,10),new THREE.MeshStandardMaterial({color,roughness:.68})); body.position.y=.56; g.add(body)
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.165,16,12),new THREE.MeshStandardMaterial({color:0xd4a17b,roughness:.9})); head.position.y=.94; g.add(head)
+  return g
+}
 
-const offices=[
-  {id:'yellow',x:-11,z:-8,w:10,d:8},
-  {id:'blue',x:11,z:-8,w:10,d:8},
-  {id:'posts',x:-11,z:3,w:10,d:7},
-  {id:'classic',x:11,z:3,w:10,d:7},
-  {id:'red',x:-7,z:11,w:6,d:5},
-  {id:'iza',x:0,z:11,w:5,d:5},
-  {id:'reserve',x:8,z:11,w:8,d:5},
-]
+function station(name){
+  const role=roleFor(name); const color=roleColor(role); const g=new THREE.Group()
+  const desk=box(1.18,.08,.66,0xe8eef6,{roughness:.84}); desk.position.y=.7; g.add(desk)
+  const screen=box(.45,.28,.04,role==='SECOND'?0x44a0ff:0x66758a,{roughness:.2}); screen.position.set(0,.98,-.16); screen.material.emissive=new THREE.Color(role==='SECOND'?0x44a0ff:0x263342); screen.material.emissiveIntensity=.32; g.add(screen)
+  const p=person(role); p.position.set(0,0,.34); g.add(p)
+  const n=label(name,color,true); n.position.set(0,1.56,.28); g.add(n)
+  const b=label(role,color,true); b.scale.set(role==='SECOND'?.78:1.02,.18,1); b.position.set(0,1.31,.28); g.add(b)
+  return g
+}
+
+const cols=4
+const cellW=12.5, cellD=10.2
+const rows=Math.ceil(realOffices.length/cols)
+const totalW=cols*cellW+6, totalD=rows*cellD+6
+const floor=box(totalW,.25,totalD,0x142235,{roughness:.9}); floor.position.y=-.12; scene.add(floor)
 
 const clickable=[]
 const officeMap=new Map()
+const palette=['#53a9ff','#ffb13c','#8c74ff','#40c99a','#ff6b7a','#66c7ff','#e59dff','#82d56d']
 
-function person(color){
-  const g=new THREE.Group()
-  const body=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.42,5,10),new THREE.MeshStandardMaterial({color,roughness:.65})); body.position.y=.58; g.add(body)
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.17,16,12),new THREE.MeshStandardMaterial({color:0xd4a17b,roughness:.9})); head.position.y=.96; g.add(head)
-  return g
-}
+realOffices.forEach((office,index)=>{
+  const row=Math.floor(index/cols), col=index%cols
+  const x=(col-(cols-1)/2)*cellW
+  const z=(row-(rows-1)/2)*cellD
+  const color=palette[index%palette.length]
+  const g=new THREE.Group(); g.position.set(x,0,z)
+  const slab=box(cellW-1,.05,cellD-1,color,{roughness:.88,transparent:true,opacity:.22}); slab.position.y=.03; g.add(slab)
+  const sign=label(`${office.name} • ${office.people.length}`,color,false); sign.position.set(0,3.6,-cellD/2+.75); g.add(sign)
 
-function station(name,category,role='SECOND'){
-  const g=new THREE.Group()
-  const desk=box(1.25,.08,.7,0xe7edf6,{roughness:.84}); desk.position.y=.72; g.add(desk)
-  const screen=box(.48,.30,.04,role==='FIRST'?0xffb13c:category.color,{roughness:.2}); screen.position.set(0,1,-.18); screen.material.emissive=new THREE.Color(role==='FIRST'?0xffb13c:category.color); screen.material.emissiveIntensity=.35; g.add(screen)
-  const p=person(role==='FIRST'?0xffb13c:category.color); p.position.set(0,0,.35); g.add(p)
-  const n=spriteLabel(name,role==='FIRST'?'#ffb13c':category.color,true); n.position.set(0,1.62,.3); g.add(n)
-  const badge=spriteLabel(role,role==='FIRST'?'#ffb13c':'#44a0ff',true); badge.scale.set(.72,.19,1); badge.position.set(0,1.34,.3); g.add(badge)
-  return g
-}
-
-function addOffice(layout){
-  const category=secondiCategories.find(x=>x.id===layout.id)
-  if(!category)return
-  const g=new THREE.Group(); g.position.set(layout.x,0,layout.z)
-  const slab=box(layout.w,.05,layout.d,new THREE.Color(category.color).multiplyScalar(.3),{roughness:.86}); slab.position.y=.03; g.add(slab)
-  const sign=spriteLabel(`${category.name.toUpperCase()} OFFICE`,category.color,false); sign.position.set(0,3.6,-layout.d/2+.3); g.add(sign)
-  const roleStrip=box(layout.w-.8,.05,.7,0x44a0ff,{roughness:.4}); roleStrip.position.set(0,.07,layout.d/2-.55); roleStrip.material.emissive=new THREE.Color(0x144a84); roleStrip.material.emissiveIntensity=.6; g.add(roleStrip)
-  const secondTitle=spriteLabel('SECOND', '#44a0ff', true); secondTitle.position.set(-layout.w/2+1.1,2.75,layout.d/2-.55); g.add(secondTitle)
-  const firstTitle=spriteLabel('FIRST', '#ffb13c', true); firstTitle.position.set(layout.w/2-1.1,2.75,layout.d/2-.55); g.add(firstTitle)
-
-  const people=category.people||[]
-  const cols=Math.max(1,Math.min(4,people.length))
-  const rows=Math.ceil(people.length/cols)
-  people.forEach((name,i)=>{
-    const col=i%cols,row=Math.floor(i/cols)
-    const sx=(col-(cols-1)/2)*1.7
-    const sz=(row-(rows-1)/2)*1.75-0.5
-    const s=station(name,category,'SECOND'); s.position.set(sx,.08,sz); g.add(s)
+  const pcols=Math.min(4,Math.max(1,office.people.length))
+  const prows=Math.ceil(office.people.length/pcols)
+  office.people.forEach((name,i)=>{
+    const c=i%pcols, r=Math.floor(i/pcols)
+    const sx=(c-(pcols-1)/2)*2.25
+    const sz=(r-(prows-1)/2)*1.9+.4
+    const s=station(name); s.position.set(sx,.08,sz); g.add(s)
   })
 
-  const firstPlaceholder=spriteLabel('FIRST • așteaptă nume','#ffb13c',true); firstPlaceholder.position.set(0,2.1,layout.d/2-1.1); firstPlaceholder.scale.set(1.9,.38,1); g.add(firstPlaceholder)
+  const hit=new THREE.Mesh(new THREE.BoxGeometry(cellW-1,3.8,cellD-1),new THREE.MeshBasicMaterial({visible:false}))
+  hit.position.y=1.9; hit.userData.officeIndex=index; g.add(hit); clickable.push(hit)
+  const light=new THREE.PointLight(new THREE.Color(color),2.1,10,2); light.position.set(0,3.2,0); g.add(light)
+  scene.add(g); officeMap.set(index,{office,g,light,x,z,color})
+})
 
-  const hit=new THREE.Mesh(new THREE.BoxGeometry(layout.w,3.5,layout.d),new THREE.MeshBasicMaterial({visible:false})); hit.position.y=1.7; hit.userData.officeId=layout.id; g.add(hit); clickable.push(hit)
-  const light=new THREE.PointLight(new THREE.Color(category.color),2.2,9,2); light.position.set(0,3,0); g.add(light)
-  scene.add(g); officeMap.set(layout.id,{group:g,category,layout,light})
-}
+const raycaster=new THREE.Raycaster(), pointer=new THREE.Vector2(); let target=null
 
-offices.forEach(addOffice)
-
-const raycaster=new THREE.Raycaster(); const pointer=new THREE.Vector2(); let target=null
-
-function selectOffice(id,focus=true){
-  const rec=officeMap.get(id); if(!rec)return
-  const {category,layout}=rec
-  document.querySelector('#panel-eyebrow').textContent=`${category.name.toUpperCase()} OFFICE`
-  document.querySelector('#panel-title').textContent=category.name
-  document.querySelector('#panel-copy').textContent=`${category.people?.length||0} persoane cunoscute în acest office.`
-  const rows=(category.people||[]).map(name=>`<div class="person-row"><strong>${name}</strong><span class="role-badge second">SECOND</span></div>`).join('')
-  document.querySelector('#people-list').innerHTML=rows+`<div class="empty-first"><b>FIRST</b><br>Numele FIRST pentru acest office nu sunt încă introduse.</div>`
-  officeMap.forEach(({light},key)=>light.intensity=key===id?5.5:1.6)
-  if(focus){target={pos:new THREE.Vector3(layout.x+6,6,layout.z+7),look:new THREE.Vector3(layout.x,1,layout.z)}}
+function selectOffice(index,focus=true){
+  const rec=officeMap.get(index); if(!rec)return
+  const {office,x,z}=rec
+  document.querySelector('#panel-eyebrow').textContent='OFFICE REAL'
+  document.querySelector('#panel-title').textContent=office.name
+  const secondCount=office.people.filter(name=>roleFor(name)==='SECOND').length
+  document.querySelector('#panel-copy').textContent=`${office.people.length} persoane • ${secondCount} SECOND cunoscuți • restul rol de stabilit.`
+  document.querySelector('#people-list').innerHTML=office.people.map(name=>{
+    const role=roleFor(name)
+    return `<div class="person-row"><strong>${name}</strong><span class="role-badge ${role==='SECOND'?'second':'unknown'}">${role}</span></div>`
+  }).join('')
+  officeMap.forEach((item,key)=>item.light.intensity=key===index?5.8:1.4)
+  if(focus) target={pos:new THREE.Vector3(x+7,6.5,z+8),look:new THREE.Vector3(x,1,z)}
 }
 
 renderer.domElement.addEventListener('pointerdown',e=>{
   const r=renderer.domElement.getBoundingClientRect(); pointer.x=((e.clientX-r.left)/r.width)*2-1; pointer.y=-((e.clientY-r.top)/r.height)*2+1
-  raycaster.setFromCamera(pointer,camera); const hit=raycaster.intersectObjects(clickable,true)[0]; if(hit?.object.userData.officeId)selectOffice(hit.object.userData.officeId,true)
+  raycaster.setFromCamera(pointer,camera); const hit=raycaster.intersectObjects(clickable,true)[0]; if(hit)selectOffice(hit.object.userData.officeIndex,true)
 })
 
-document.querySelector('#overview').addEventListener('click',()=>{target={pos:new THREE.Vector3(24,19,28),look:new THREE.Vector3(0,1,0)}})
+document.querySelector('#overview').addEventListener('click',()=>{target={pos:new THREE.Vector3(35,30,42),look:new THREE.Vector3(0,1,0)}})
+const title=document.querySelector('.top-title'); if(title) title.textContent=`Office Room • ${realOffices.length} office-uri • ${officeRosterCount} persoane`
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)})
 
-function animate(){requestAnimationFrame(animate); if(target){camera.position.lerp(target.pos,.07);controls.target.lerp(target.look,.07);if(camera.position.distanceTo(target.pos)<.06)target=null}controls.update();renderer.render(scene,camera)}
-animate()
-selectOffice('red',false)
+function animate(){requestAnimationFrame(animate);if(target){camera.position.lerp(target.pos,.07);controls.target.lerp(target.look,.07);if(camera.position.distanceTo(target.pos)<.06)target=null}controls.update();renderer.render(scene,camera)}
+animate(); selectOffice(0,false)
