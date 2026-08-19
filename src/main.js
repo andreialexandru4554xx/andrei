@@ -30,9 +30,9 @@ class BusinessTower3D {
     this.onFloorSelected = null
 
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth < 760 ? 1.05 : 1.4))
     this.renderer.setSize(innerWidth, innerHeight)
-    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.enabled = innerWidth >= 760
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -50,7 +50,10 @@ class BusinessTower3D {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.enableDamping = true
-    this.controls.dampingFactor = 0.055
+    this.controls.dampingFactor = 0.07
+    this.controls.rotateSpeed = 0.58
+    this.controls.zoomSpeed = 1.15
+    this.controls.enablePan = false
     this.controls.minDistance = 8
     this.controls.maxDistance = 92
     this.controls.maxPolarAngle = Math.PI * 0.49
@@ -70,7 +73,7 @@ class BusinessTower3D {
     this.scene.add(new THREE.HemisphereLight(0xddeaff, 0x070b15, 2.2))
     const sun = new THREE.DirectionalLight(0xffffff, 4.1)
     sun.position.set(28, 65, 30)
-    sun.castShadow = true
+    sun.castShadow = innerWidth >= 760
     sun.shadow.mapSize.set(2048, 2048)
     sun.shadow.camera.left = -45
     sun.shadow.camera.right = 45
@@ -881,6 +884,8 @@ const state = {
 }
 
 const tower = new BusinessTower3D($('#world'), businessFloors, teams)
+window.__RECRUITFLOW_TOWER__ = tower
+window.__RECRUITFLOW_TOWER_DATA__ = { businessFloors, teams }
 tower.onFloorSelected = floorId => selectFloor(floorId)
 
 function floorById(id) {
@@ -1115,4 +1120,4 @@ renderFloorList()
 renderMissions()
 updateProgress()
 selectFloor('welcome', { instant: true })
-setTimeout(() => tower.towerView(), 900)
+setTimeout(() => tower.focusFloor('welcome'), 280)
