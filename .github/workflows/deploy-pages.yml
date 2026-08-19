@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -39,6 +39,11 @@ jobs:
           unzip -q -o /tmp/seconds-agents.zip -d _site/seconds-agents
           rm -rf _site/.git _site/.github _site/.deploy
           rm -f _site/seconds-agents-package.zip
+          test -s _site/seconds-agents/index.html
+          test -s _site/seconds-agents/app.js
+          test -s _site/seconds-agents/manifest.webmanifest
+          grep -q "Seconds Agents" _site/seconds-agents/index.html
+          grep -q "seconds-agents:data:v1" _site/seconds-agents/app.js
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
@@ -48,3 +53,30 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify public application
+        shell: bash
+        env:
+          PUBLIC_URL: ${{ steps.deployment.outputs.page_url }}seconds-agents/
+        run: |
+          set -euo pipefail
+          for attempt in {1..24}; do
+            index="$(curl -fsSL --max-time 20 "$PUBLIC_URL" || true)"
+            app="$(curl -fsSL --max-time 20 "${PUBLIC_URL}app.js" || true)"
+            manifest="$(curl -fsSL --max-time 20 "${PUBLIC_URL}manifest.webmanifest" || true)"
+            if grep -q "Seconds Agents" <<<"$index" \
+              && grep -q "seconds-agents:data:v1" <<<"$app" \
+              && grep -q "Seconds Agents" <<<"$manifest"; then
+              echo "Seconds Agents is live and verified at $PUBLIC_URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Public verification failed for $PUBLIC_URL" >&2
+          exit 1
+
+      - name: Mark verified deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push --force origin "HEAD:refs/heads/seconds-agents-live"
