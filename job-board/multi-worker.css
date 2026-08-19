@@ -1,0 +1,29 @@
+.worker-capacity{margin:10px 0 13px;padding:13px;border:1px solid #dbe7f1;border-radius:14px;background:linear-gradient(135deg,#f8fbfe,#f2f7fb)}
+.worker-capacity-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.worker-capacity-head strong{font-size:13px;color:#172a40}
+.worker-capacity-head span{font-size:10px;color:#60758a;text-align:right;line-height:1.35}
+.worker-slot-bar{position:relative;display:flex;height:9px;margin:10px 0 9px;border-radius:999px;background:#e4eaf1;overflow:hidden}
+.worker-slot-found{height:100%;background:#20c77a;transition:width .2s ease}
+.worker-slot-claimed{height:100%;background:#f6b83c;transition:width .2s ease}
+.worker-slot-legend{display:flex;flex-wrap:wrap;gap:9px;font-size:9px;font-weight:850;color:#607386}
+.worker-slot-legend span{display:flex;align-items:center;gap:4px}
+.worker-slot-legend i{display:inline-block;width:8px;height:8px;border-radius:3px;background:#dce3ea}
+.worker-slot-legend .legend-found i{background:#20c77a}
+.worker-slot-legend .legend-claimed i{background:#f6b83c}
+.worker-slot-legend .legend-free i{background:#dce3ea}
+.worker-allocations{display:grid;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid #e2e9f0}
+.worker-allocation{display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:10px;color:#53687d}
+.worker-allocation strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1b3047}
+.worker-allocation span{white-space:nowrap}
+.worker-allocation.is-me{padding:6px 8px;margin:-2px -3px;border-radius:8px;background:#e4f6fd;color:#076f99}
+.worker-allocation.is-me strong{color:#075f83}
+.slot-dialog-summary{padding:12px 13px;border-radius:12px;background:#edf8fc;color:#31566c;font-size:13px;line-height:1.5}
+.slot-dialog-summary strong{color:#0a729c}
+.slot-quantity-field input{font-size:22px;font-weight:900;text-align:center;padding:13px}
+.worker-number-hint{display:block;margin-top:5px;color:#6c7f92;font-size:10px;font-weight:650;line-height:1.35}
+.action-claim-slots{background:#0c1c2f;color:#fff}
+.action-found-slots{background:#24c97c;color:#073a25}
+.action-release-slots{background:#eef1f5;color:#4f5e70}
+.capacity-complete{border-color:#b9ead2;background:linear-gradient(135deg,#f0fcf6,#e8f9f0)}
+.capacity-complete .worker-capacity-head strong{color:#087749}
+@media(max-width:620px){.worker-capacity-head{flex-direction:column;gap:4px}.worker-capacity-head span{text-align:left}.worker-allocation{align-items:flex-start;flex-direction:column;gap:2px}.worker-allocation span{white-space:normal}}
