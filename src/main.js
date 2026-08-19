@@ -1,60 +1,1118 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
-import { secondiCategories, allPeople, roleGroups, callCenters, globalMetrics } from './data.js'
+import {
+  companySnapshot,
+  teams,
+  roles,
+  apps,
+  businessFloors,
+  visitorMissions,
+  glossary,
+} from './data.js'
 
-const $=s=>document.querySelector(s)
-const canvas=$('#world')
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true})
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight)
-renderer.shadowMap.enabled=true;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x07101a);scene.fog=new THREE.Fog(0x07101a,45,115)
-const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture
-const camera=new THREE.PerspectiveCamera(43,innerWidth/innerHeight,.1,240);camera.position.set(-34,18,23)
-const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.minDistance=8;controls.maxDistance=72;controls.maxPolarAngle=Math.PI*.48;controls.target.set(-34,1,0)
-scene.add(new THREE.HemisphereLight(0xdceaff,0x111722,2.2))
-const sun=new THREE.DirectionalLight(0xffffff,3.8);sun.position.set(-8,34,18);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);scene.add(sun)
+const $ = selector => document.querySelector(selector)
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
-const centers={teams:new THREE.Vector3(-34,0,0),roles:new THREE.Vector3(0,0,0),calls:new THREE.Vector3(34,0,0)}
-const views={teams:[new THREE.Vector3(-34,18,23),new THREE.Vector3(-34,1,0)],roles:[new THREE.Vector3(0,18,23),new THREE.Vector3(0,1,0)],calls:[new THREE.Vector3(34,18,23),new THREE.Vector3(34,1,0)]}
-const labels={teams:[],roles:[],calls:[]},clickable=[],records={teams:new Map(),roles:new Map(),calls:new Map()},buildingLights={}
-let current='teams',targetCamera=null
+class BusinessTower3D {
+  constructor(canvas, floors, teamsData) {
+    this.canvas = canvas
+    this.floors = floors
+    this.teams = teamsData
+    this.floorHeight = 4.65
+    this.floorWidth = 26
+    this.floorDepth = 18
+    this.floorObjects = new Map()
+    this.clickables = []
+    this.animated = []
+    this.currentFloorId = 'welcome'
+    this.targetCamera = null
+    this.onFloorSelected = null
 
-function box(w,h,d,color,o={}){const m=new THREE.MeshStandardMaterial({color,roughness:o.r??.58,metalness:o.m??.1,transparent:o.t??false,opacity:o.o??1});if(o.e){m.emissive=new THREE.Color(o.e);m.emissiveIntensity=o.ei??.3}const x=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);x.castShadow=o.cs??true;x.receiveShadow=o.rs??true;return x}
-function round(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):(ctx.rect(x,y,w,h));ctx.closePath()}
-function label(title,sub,color,small=false){const c=document.createElement('canvas');c.width=small?620:900;c.height=small?140:220;const x=c.getContext('2d');round(x,12,12,c.width-24,c.height-24,small?22:32);x.fillStyle='rgba(4,8,15,.86)';x.fill();x.strokeStyle=color;x.lineWidth=small?3:5;x.stroke();x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.font=small?'700 42px Arial':'900 64px Arial';x.fillText(title,c.width/2,sub?c.height*.42:c.height*.5);if(sub){x.fillStyle=color;x.font=small?'700 27px Arial':'800 34px Arial';x.fillText(sub,c.width/2,c.height*.72)}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(small?1.02:3.3,small?.22:.82,1);return s}
-function addLabel(s,b,always=false){labels[b].push({s,always});return s}
-function showLabels(){Object.entries(labels).forEach(([b,a])=>a.forEach(v=>v.s.visible=v.always||b===current))}
-function person(color,scale=.82){const g=new THREE.Group(),cloth=new THREE.MeshStandardMaterial({color,roughness:.6,emissive:new THREE.Color(color),emissiveIntensity:.08});const body=new THREE.Mesh(new THREE.CapsuleGeometry(.14*scale,.38*scale,4,8),cloth);body.position.y=.59*scale;g.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.15*scale,10,8),new THREE.MeshStandardMaterial({color:0xd3a17c,roughness:.9}));head.position.y=.98*scale;g.add(head);for(const x of[-.08,.08]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.05*scale,.3*scale,3,6),new THREE.MeshStandardMaterial({color:0x202936,roughness:.75}));leg.position.set(x*scale,.22*scale,0);g.add(leg)}return g}
-function station(p,b){const g=new THREE.Group(),desk=box(1.02,.07,.52,0xd9e1ec,{r:.75,m:.03});desk.position.y=.66;g.add(desk);for(const x of[-.41,.41]){const l=box(.05,.64,.05,0x66748a,{m:.35});l.position.set(x,.32,0);g.add(l)}const screen=box(.4,.25,.03,0x101722,{e:p.color,ei:.38});screen.position.set(0,.89,-.07);g.add(screen);const avatar=person(p.color);avatar.position.set(0,.05,.35);avatar.rotation.y=Math.PI;g.add(avatar);const n=addLabel(label(p.name,'',p.color,true),b);n.position.set(0,1.37,.33);g.add(n);return g}
-function standing(p,b){const g=new THREE.Group(),avatar=person(p.color,.78);avatar.position.y=.08;g.add(avatar);const n=addLabel(label(p.name,'',p.color,true),b);n.scale.set(.84,.18,1);n.position.y=1.35;g.add(n);return g}
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    this.renderer.setSize(innerWidth, innerHeight)
+    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+    this.renderer.toneMappingExposure = 1.1
 
-function campus(){const ground=box(108,.35,38,0x0e1826,{r:.92,cs:false});ground.position.y=-.3;scene.add(ground);const road=box(102,.03,5,0x17263b,{r:.96,cs:false});road.position.set(0,-.1,15.5);scene.add(road);for(let x=-48;x<=48;x+=6){const mark=box(2.5,.02,.1,0x6f88a8,{cs:false,e:0x314b70});mark.position.set(x,-.07,15.5);scene.add(mark)}}
-function shell(id,title,sub,color){const g=new THREE.Group();g.position.copy(centers[id]);const base=box(27,.3,23,0x101c2b,{r:.7,m:.18});base.position.y=-.08;g.add(base);const floor=box(25.8,.08,21.8,0x1a2738,{r:.9});floor.position.y=.12;g.add(floor);const glass=new THREE.MeshPhysicalMaterial({color:0x9bcaff,roughness:.12,transmission:.35,transparent:true,opacity:.15,side:THREE.DoubleSide});const back=new THREE.Mesh(new THREE.BoxGeometry(25.8,5.7,.1),glass);back.position.set(0,2.85,-10.9);g.add(back);for(const x of[-12.9,12.9]){const side=new THREE.Mesh(new THREE.BoxGeometry(.1,5.7,21.8),glass);side.position.set(x,2.85,0);g.add(side)}for(const x of[-12.8,-6.4,0,6.4,12.8]){const beam=box(.12,.12,21.7,0x33475f,{m:.56});beam.position.set(x,5.7,0);g.add(beam)}const sign=addLabel(label(title,sub,color),id,true);sign.scale.set(4.4,1.08,1);sign.position.set(0,6.8,-8.8);g.add(sign);const light=new THREE.PointLight(color,4.5,22,2);light.position.set(0,5.2,0);g.add(light);buildingLights[id]=light;scene.add(g);return g}
-function hit(parent,w,d,b,type,id){const h=new THREE.Mesh(new THREE.BoxGeometry(w,3.4,d),new THREE.MeshBasicMaterial({visible:false}));h.position.y=1.8;h.userData={building:b,type,id};parent.add(h);clickable.push(h)}
+    this.scene = new THREE.Scene()
+    this.scene.background = new THREE.Color(0x030712)
+    this.scene.fog = new THREE.FogExp2(0x030712, 0.012)
 
-function teamsBuilding(){const b=shell('teams','TEAMS BUILDING','78 oameni • 5 echipe','#78a9ff');const aisle=box(2.4,.02,20.5,0x233a58,{r:.95,cs:false});aisle.position.y=.18;b.add(aisle);const layout={yellow:[-7.1,-4.5,5,1.42,1.5],blue:[6.3,-4.5,5,1.42,1.5],red:[-8.5,6.8,3,1.45,1.5],posts:[-2.1,5.4,5,1.42,1.5],classic:[7.5,5.3,4,1.45,1.5]};secondiCategories.forEach(t=>{const [x,z,cols,sx,sz]=layout[t.id],g=new THREE.Group();g.position.set(x,0,z);const rows=Math.ceil(t.count/cols),ac=Math.min(cols,t.count),w=Math.max(3.1,(ac-1)*sx+1.5),d=Math.max(2.4,(rows-1)*sz+1.7);const f=box(w,.025,d,t.accent,{t:true,o:.48,r:.95,cs:false});f.position.y=.2;f.userData={building:'teams',type:'team',id:t.id};g.add(f);clickable.push(f);const sign=addLabel(label(t.name.toUpperCase(),`${t.count} oameni`,t.color),'teams');sign.scale.set(2.25,.62,1);sign.position.set(0,3.05,-d/2+.2);g.add(sign);const tw=(ac-1)*sx,td=(rows-1)*sz;t.people.forEach((name,i)=>{const s=station({name,color:t.color},'teams');s.position.set((i%cols)*sx-tw/2,.23,Math.floor(i/cols)*sz-td/2);g.add(s)});const light=new THREE.PointLight(t.color,2.4,7,2);light.position.set(0,3.3,0);g.add(light);hit(g,w,d,'teams','team',t.id);b.add(g);records.teams.set(t.id,{data:t,obj:g,light,floor:f})})}
+    const pmrem = new THREE.PMREMGenerator(this.renderer)
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
 
-function rolesBuilding(){const b=shell('roles','ROLES BUILDING','First • Second • Ambele','#52d6ff');const second=roleGroups.find(r=>r.id==='second'),cols=13,sx=1.35,sz=1.45,rows=Math.ceil(second.people.length/cols),w=(cols-1)*sx+1.4,d=(rows-1)*sz+1.65,g=new THREE.Group();g.position.set(0,0,-2.3);const f=box(w,.025,d,0x214157,{t:true,o:.8,r:.94,cs:false});f.position.y=.2;f.userData={building:'roles',type:'role',id:'second'};g.add(f);clickable.push(f);const sign=addLabel(label('SECOND',`${second.people.length} oameni • provizoriu`,second.color),'roles');sign.position.set(0,3.05,-d/2+.2);g.add(sign);const tw=(cols-1)*sx,td=(rows-1)*sz;second.people.forEach((p,i)=>{const a=standing(p,'roles');a.position.set((i%cols)*sx-tw/2,.22,Math.floor(i/cols)*sz-td/2);g.add(a)});const light=new THREE.PointLight(second.color,3.4,11,2);light.position.set(0,4,0);g.add(light);hit(g,w,d,'roles','role','second');b.add(g);records.roles.set('second',{data:second,obj:g,light,floor:f});[['first',-7],['both',7]].forEach(([id,x])=>{const r=roleGroups.find(q=>q.id===id),z=new THREE.Group();z.position.set(x,0,7.3);const floor=box(6.1,.025,4.1,r.color,{t:true,o:.23,r:.94,cs:false});floor.position.y=.2;floor.userData={building:'roles',type:'role',id};z.add(floor);clickable.push(floor);const s=addLabel(label(r.name.toUpperCase(),'0 oameni • de completat',r.color),'roles');s.scale.set(2.7,.7,1);s.position.set(0,2.8,-1.1);z.add(s);for(const dx of[-1.7,0,1.7]){const desk=box(1.1,.07,.55,0x738096,{t:true,o:.38});desk.position.set(dx,.72,.45);z.add(desk)}const l=new THREE.PointLight(r.color,1.8,7,2);l.position.set(0,3,0);z.add(l);hit(z,6.1,4.1,'roles','role',id);b.add(z);records.roles.set(id,{data:r,obj:z,light:l,floor})});const note=addLabel(label('ÎNCADRARE PROVIZORIE','Completez exact după poze','#9adfff'),'roles');note.scale.set(3.1,.72,1);note.position.set(0,2.4,8.3);b.add(note)}
+    this.camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 320)
+    this.camera.position.set(42, 32, 58)
 
-function callsBuilding(){const b=shell('calls','CALLS CENTER','5 aplicații • panouri pregătite','#ff8e5c'),pos=[[-8.1,-4.3],[0,-4.3],[8.1,-4.3],[-4.1,5],[4.1,5]];callCenters.forEach((c,i)=>{const g=new THREE.Group();g.position.set(pos[i][0],0,pos[i][1]);const f=box(6.4,.04,5.4,c.color,{t:true,o:.22,r:.9,cs:false});f.position.y=.2;f.userData={building:'calls',type:'call',id:c.id};g.add(f);clickable.push(f);const frame=box(5.2,2,.18,0x101823,{r:.22,m:.45});frame.position.set(0,2.75,-2.2);g.add(frame);const screen=box(4.8,1.62,.04,0x111827,{e:c.color,ei:.25});screen.position.set(0,2.75,-2.08);g.add(screen);const txt=addLabel(label(c.name.toUpperCase(),`${c.callsToday} apeluri azi • demo`,c.color),'calls');txt.scale.set(3.4,.9,1);txt.position.set(0,2.75,-1.93);g.add(txt);for(const x of[-1.45,0,1.45]){const desk=box(1.12,.08,.58,0x738196,{r:.7});desk.position.set(x,.72,.5);g.add(desk);const op=person(c.color,.76);op.position.set(x,.18,1.05);op.rotation.y=Math.PI;g.add(op)}const light=new THREE.PointLight(c.color,3.2,7,2);light.position.set(0,3.6,0);g.add(light);hit(g,6.4,5.4,'calls','call',c.id);b.add(g);records.calls.set(c.id,{data:c,obj:g,light,floor:f})});const hub=label('LIVE DATA HUB','Dialpad / API • urmează conectarea','#ffad88');addLabel(hub,'calls');hub.position.set(0,2.7,.3);b.add(hub)}
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+    this.controls.enableDamping = true
+    this.controls.dampingFactor = 0.055
+    this.controls.minDistance = 8
+    this.controls.maxDistance = 92
+    this.controls.maxPolarAngle = Math.PI * 0.49
+    this.controls.target.set(0, 20, 0)
 
-campus();teamsBuilding();rolesBuilding();callsBuilding();showLabels()
+    this.raycaster = new THREE.Raycaster()
+    this.pointer = new THREE.Vector2()
 
-const ui={eyebrow:$('#sidebar-eyebrow'),title:$('#sidebar-title'),copy:$('#sidebar-copy'),section:$('#section-label'),kpis:$('#global-kpis'),list:$('#zone-list'),panel:$('#detail-panel'),de:$('#detail-eyebrow'),dt:$('#detail-title'),dd:$('#detail-description'),dk:$('#detail-kpis'),dn:$('#detail-note'),roster:$('#roster-panel'),back:$('#roster-backdrop'),content:$('#roster-content')}
-const metric=m=>ui.kpis.innerHTML=m.map(([v,l])=>`<div class="kpi-card"><div class="kpi-value">${v}</div><div class="kpi-label">${l}</div></div>`).join('')
-function buttons(items){ui.list.innerHTML=items.map(i=>`<button class="zone-button" data-zone="${i.id}"><span class="zone-color" style="background:${i.color};box-shadow:0 0 18px ${i.color}88"></span><span class="zone-copy"><span class="zone-name">${i.name}</span><span class="zone-meta">${i.meta}</span></span><span class="zone-count" style="color:${i.color}">${i.count}</span></button>`).join('');ui.list.querySelectorAll('[data-zone]').forEach(b=>b.onclick=()=>select(current,b.dataset.zone,true))}
-function sidebar(b){if(b==='teams'){ui.eyebrow.textContent='TEAMS BUILDING';ui.title.textContent='Open Office';ui.copy.textContent='Toți cei 78 de agenți sunt vizibili la birouri, grupați pe aplicație.';ui.section.textContent='Echipe';metric(globalMetrics);buttons(secondiCategories.map(x=>({id:x.id,name:x.name,color:x.color,meta:x.action,count:x.count})))}else if(b==='roles'){ui.eyebrow.textContent='ROLES BUILDING';ui.title.textContent='First / Second / Ambele';ui.copy.textContent='Încadrare provizorie. Toți cei 78 sunt momentan în Second până completăm după poze.';ui.section.textContent='Roluri';metric([['0','First'],['78','Second'],['0','Ambele'],['78','Total']]);buttons(roleGroups.map(x=>({id:x.id,name:x.name,color:x.color,meta:x.status,count:x.people.length})))}else{ui.eyebrow.textContent='CALLS CENTER';ui.title.textContent='Live Call Control';ui.copy.textContent='Panouri separate pentru fiecare aplicație. Valorile sunt 0 până conectăm sursa reală.';ui.section.textContent='Aplicații';metric([['5','Aplicații'],['0','Apeluri azi'],['0','Surse live'],['Demo','Status']]);buttons(callCenters.map(x=>({id:x.id,name:x.name,color:x.color,meta:x.status,count:x.callsToday})))}}
-function reset(){records.teams.forEach(r=>{r.light.intensity=2.4;r.floor.material.opacity=.48});records.roles.forEach(r=>{r.light.intensity=r.data.id==='second'?3.4:1.8;r.floor.material.opacity=r.data.id==='second'?.8:.23});records.calls.forEach(r=>{r.light.intensity=3.2;r.floor.material.opacity=.22})}
-function focus(obj,offset){const p=new THREE.Vector3();obj.getWorldPosition(p);targetCamera=[p.clone().add(offset),p.clone().add(new THREE.Vector3(0,1,0))]}
-function select(b,id,move){reset();ui.list.querySelectorAll('[data-zone]').forEach(x=>x.classList.toggle('active',x.dataset.zone===id));const r=records[b].get(id);if(!r)return;r.light.intensity=8;r.floor.material.opacity=.9;if(b==='teams'){const t=r.data;ui.de.textContent=`${t.priority.toUpperCase()} • ${t.action.toUpperCase()}`;ui.dt.textContent=t.name;ui.dd.textContent=t.description;ui.dk.innerHTML=`<div class="detail-kpi"><strong>${t.count}</strong><span>oameni</span></div><div class="detail-kpi"><strong>${Math.round(t.count/78*100)}%</strong><span>din total</span></div><div class="detail-kpi"><strong>Activ</strong><span>status</span></div>`;ui.dn.innerHTML=`<strong>Nume:</strong> ${t.people.join(', ')}`;if(move)focus(r.obj,new THREE.Vector3(6.5,7.2,7.5))}else if(b==='roles'){const q=r.data;ui.de.textContent=`ROLES • ${q.status.toUpperCase()}`;ui.dt.textContent=q.name;ui.dd.textContent=q.description;ui.dk.innerHTML=`<div class="detail-kpi"><strong>${q.people.length}</strong><span>oameni</span></div><div class="detail-kpi"><strong>${q.status}</strong><span>încadrare</span></div><div class="detail-kpi"><strong>${q.people.length}</strong><span>vizibili 3D</span></div>`;ui.dn.innerHTML=q.people.length?`<strong>Nume:</strong> ${q.people.map(p=>p.name).join(', ')}`:'<strong>Pregătit:</strong> zona va fi completată după poze.';if(move)focus(r.obj,new THREE.Vector3(7,8,9))}else{const c=r.data;ui.de.textContent=`CALLS CENTER • ${c.name.toUpperCase()}`;ui.dt.textContent=`${c.name} Calls`;ui.dd.textContent='Panou pregătit pentru conectarea la datele reale de apeluri.';ui.dk.innerHTML=`<div class="detail-kpi"><strong>0</strong><span>apeluri azi</span></div><div class="detail-kpi"><strong>${c.agents}</strong><span>agenți</span></div><div class="detail-kpi"><strong>Offline</strong><span>sursă live</span></div>`;ui.dn.innerHTML=`<strong>Status:</strong> ${c.status}. Nu inventăm cifre până conectăm sursa reală.`;if(move)focus(r.obj,new THREE.Vector3(5.8,5.8,7.2))}ui.panel.classList.add('open')}
-function setBuilding(b,move=true){current=b;ui.panel.classList.remove('open');document.querySelectorAll('[data-building]').forEach(x=>x.classList.toggle('active',x.dataset.building===b));showLabels();sidebar(b);if(move)targetCamera=[views[b][0].clone(),views[b][1].clone()]}
+    this.buildLighting()
+    this.buildCampus()
+    this.buildTower()
+    this.bindEvents()
+    this.animate()
+  }
 
-document.querySelectorAll('[data-building]').forEach(b=>b.onclick=()=>setBuilding(b.dataset.building))
-$('#reset-view').onclick=()=>setBuilding(current);$('#close-detail').onclick=()=>{ui.panel.classList.remove('open');reset()}
-ui.content.innerHTML=secondiCategories.map(t=>`<section class="roster-team"><div class="roster-team-head" style="border-left:5px solid ${t.color}"><span>${t.name}</span><span class="roster-team-count">${t.count} oameni</span></div><div class="roster-names">${t.people.map((n,i)=>`<div class="roster-person"><span style="background:${t.color}">${i+1}</span>${n}</div>`).join('')}</div></section>`).join('')
-function roster(open){ui.roster.classList.toggle('open',open);ui.back.classList.toggle('open',open)}
-$('#open-roster').onclick=()=>roster(true);$('#close-roster').onclick=()=>roster(false);ui.back.onclick=()=>roster(false)
-const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();canvas.addEventListener('pointerdown',e=>{const r=canvas.getBoundingClientRect();pointer.x=(e.clientX-r.left)/r.width*2-1;pointer.y=-(e.clientY-r.top)/r.height*2+1;ray.setFromCamera(pointer,camera);const h=ray.intersectObjects(clickable,true)[0];if(h){const d=h.object.userData;if(d.building!==current)setBuilding(d.building,false);select(d.building,d.id,true)}})
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)})
-sidebar('teams');const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);const t=clock.getElapsedTime();Object.entries(buildingLights).forEach(([b,l])=>l.intensity=b===current?5.2+Math.sin(t*1.2)*.5:2.1);if(targetCamera){camera.position.lerp(targetCamera[0],.075);controls.target.lerp(targetCamera[1],.075);if(camera.position.distanceTo(targetCamera[0])<.04)targetCamera=null}controls.update();renderer.render(scene,camera)}animate()
+  buildLighting() {
+    this.scene.add(new THREE.HemisphereLight(0xddeaff, 0x070b15, 2.2))
+    const sun = new THREE.DirectionalLight(0xffffff, 4.1)
+    sun.position.set(28, 65, 30)
+    sun.castShadow = true
+    sun.shadow.mapSize.set(2048, 2048)
+    sun.shadow.camera.left = -45
+    sun.shadow.camera.right = 45
+    sun.shadow.camera.top = 65
+    sun.shadow.camera.bottom = -20
+    this.scene.add(sun)
+
+    const fill = new THREE.DirectionalLight(0x8bbcff, 1.5)
+    fill.position.set(-24, 35, 18)
+    this.scene.add(fill)
+  }
+
+  material(color, options = {}) {
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      roughness: options.roughness ?? 0.58,
+      metalness: options.metalness ?? 0.12,
+      transparent: options.transparent ?? false,
+      opacity: options.opacity ?? 1,
+    })
+    if (options.emissive) {
+      material.emissive = new THREE.Color(options.emissive)
+      material.emissiveIntensity = options.emissiveIntensity ?? 0.35
+    }
+    return material
+  }
+
+  box(width, height, depth, color, options = {}) {
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(width, height, depth),
+      this.material(color, options),
+    )
+    mesh.castShadow = options.castShadow ?? true
+    mesh.receiveShadow = options.receiveShadow ?? true
+    return mesh
+  }
+
+  cylinder(radiusTop, radiusBottom, height, color, options = {}) {
+    const mesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(radiusTop, radiusBottom, height, options.segments ?? 24),
+      this.material(color, options),
+    )
+    mesh.castShadow = options.castShadow ?? true
+    mesh.receiveShadow = options.receiveShadow ?? true
+    return mesh
+  }
+
+  createSprite(title, subtitle, color, options = {}) {
+    const small = options.small ?? false
+    const width = small ? 720 : 1024
+    const height = small ? 170 : 300
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, width, height)
+    ctx.fillStyle = options.background ?? 'rgba(4,8,16,.88)'
+    ctx.beginPath()
+    if (ctx.roundRect) ctx.roundRect(18, 18, width - 36, height - 36, small ? 28 : 42)
+    else ctx.rect(18, 18, width - 36, height - 36)
+    ctx.fill()
+    ctx.strokeStyle = color
+    ctx.lineWidth = small ? 4 : 7
+    ctx.stroke()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = '#ffffff'
+    ctx.font = small ? '800 48px Arial' : '900 80px Arial'
+    ctx.fillText(title, width / 2, subtitle ? height * 0.42 : height * 0.52)
+    if (subtitle) {
+      ctx.fillStyle = color
+      ctx.font = small ? '700 30px Arial' : '800 43px Arial'
+      ctx.fillText(subtitle, width / 2, height * 0.72)
+    }
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.colorSpace = THREE.SRGBColorSpace
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }))
+    sprite.scale.set(small ? 1.55 : 4.3, small ? 0.36 : 1.25, 1)
+    return sprite
+  }
+
+  buildCampus() {
+    const ground = this.box(92, 0.45, 76, 0x07101c, { roughness: 0.92, castShadow: false })
+    ground.position.y = -0.42
+    this.scene.add(ground)
+
+    const plaza = this.box(44, 0.08, 32, 0x101d2c, { roughness: 0.8, metalness: 0.16, castShadow: false })
+    plaza.position.set(0, -0.12, 5)
+    this.scene.add(plaza)
+
+    const road = this.box(88, 0.04, 8, 0x111a27, { roughness: 1, castShadow: false })
+    road.position.set(0, -0.15, 27)
+    this.scene.add(road)
+
+    for (let x = -38; x <= 38; x += 8) {
+      const marker = this.box(3.5, 0.02, 0.12, 0x8ca3c3, { emissive: 0x263d5c, emissiveIntensity: 0.6, castShadow: false })
+      marker.position.set(x, -0.1, 27)
+      this.scene.add(marker)
+    }
+
+    for (const x of [-34, -28, 28, 34]) {
+      for (const z of [-10, 4, 18]) this.addTree(x, z)
+    }
+
+    const title = this.createSprite('RECRUITFLOW BUSINESS TOWER', '10 niveluri • sistem operațional 3D', '#79d7ff')
+    title.scale.set(8.3, 2.35, 1)
+    title.position.set(0, 4.2, 19.5)
+    this.scene.add(title)
+
+    const pipeline = ['SOURCING', 'DATA', 'MATCHING', 'CALLS', 'RESULT']
+    pipeline.forEach((step, index) => {
+      const x = (index - 2) * 5
+      const node = this.cylinder(1.2, 1.35, 0.42, 0x17314d, { metalness: 0.45, roughness: 0.32 })
+      node.position.set(x, 0.23, 10.5)
+      this.scene.add(node)
+      const tag = this.createSprite(step, '', index % 2 ? '#a78bfa' : '#79d7ff', { small: true })
+      tag.scale.set(1.85, 0.42, 1)
+      tag.position.set(x, 1.2, 10.5)
+      this.scene.add(tag)
+      if (index < pipeline.length - 1) {
+        const beam = this.box(3.2, 0.07, 0.12, 0x4c87be, { emissive: 0x4c87be, emissiveIntensity: 1.2, transparent: true, opacity: 0.7 })
+        beam.position.set(x + 2.5, 0.38, 10.5)
+        this.scene.add(beam)
+      }
+    })
+  }
+
+  addTree(x, z) {
+    const trunk = this.cylinder(0.12, 0.18, 1.7, 0x6f4b31, { roughness: 0.9 })
+    trunk.position.set(x, 0.75, z)
+    this.scene.add(trunk)
+    const crown = new THREE.Mesh(
+      new THREE.SphereGeometry(0.75, 14, 10),
+      this.material(0x2d8a62, { roughness: 0.9 }),
+    )
+    crown.scale.set(0.85, 1.35, 0.85)
+    crown.position.set(x, 2.1, z)
+    this.scene.add(crown)
+  }
+
+  buildTower() {
+    const towerBase = this.box(29, 0.8, 21, 0x0c1624, { roughness: 0.55, metalness: 0.42 })
+    towerBase.position.y = -0.05
+    this.scene.add(towerBase)
+
+    const core = this.box(3.1, this.floorHeight * 10 + 2, 4.2, 0x111e2e, { roughness: 0.35, metalness: 0.55 })
+    core.position.set(-10.7, (this.floorHeight * 9) / 2 + 2.2, -6.3)
+    this.scene.add(core)
+
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x92c8ff,
+      roughness: 0.1,
+      metalness: 0.08,
+      transmission: 0.58,
+      transparent: true,
+      opacity: 0.16,
+      side: THREE.DoubleSide,
+    })
+
+    const towerHeight = this.floorHeight * 10
+    for (const x of [-13.1, 13.1]) {
+      const side = new THREE.Mesh(new THREE.BoxGeometry(0.1, towerHeight, this.floorDepth), glassMaterial)
+      side.position.set(x, towerHeight / 2 - 0.1, 0)
+      this.scene.add(side)
+    }
+    const back = new THREE.Mesh(new THREE.BoxGeometry(this.floorWidth, towerHeight, 0.1), glassMaterial)
+    back.position.set(0, towerHeight / 2 - 0.1, -9)
+    this.scene.add(back)
+
+    for (const floor of this.floors) this.buildFloor(floor)
+
+    const roof = this.box(28, 0.5, 20, 0x101c2b, { metalness: 0.5, roughness: 0.35 })
+    roof.position.y = this.floorHeight * 10 - 0.1
+    this.scene.add(roof)
+
+    const beacon = this.cylinder(0.35, 0.65, 5.4, 0x79d7ff, {
+      emissive: 0x79d7ff,
+      emissiveIntensity: 2.1,
+      transparent: true,
+      opacity: 0.85,
+    })
+    beacon.position.set(0, this.floorHeight * 10 + 2.55, -1)
+    this.scene.add(beacon)
+    this.animated.push({ object: beacon, type: 'beacon' })
+
+    for (const x of [-12.85, 12.85]) {
+      const strip = this.box(0.12, towerHeight, 0.16, 0x79d7ff, {
+        emissive: 0x79d7ff,
+        emissiveIntensity: 1.15,
+        transparent: true,
+        opacity: 0.7,
+      })
+      strip.position.set(x, towerHeight / 2, 8.95)
+      this.scene.add(strip)
+    }
+  }
+
+  buildFloor(floor) {
+    const y = (floor.number - 1) * this.floorHeight
+    const group = new THREE.Group()
+    group.position.y = y
+    group.userData.floorId = floor.id
+
+    const slab = this.box(this.floorWidth, 0.24, this.floorDepth, 0x162437, {
+      roughness: 0.72,
+      metalness: 0.2,
+    })
+    slab.position.y = 0.05
+    slab.userData.floorId = floor.id
+    group.add(slab)
+    this.clickables.push(slab)
+
+    const carpet = this.box(this.floorWidth - 1, 0.035, this.floorDepth - 1, floor.color, {
+      roughness: 0.96,
+      metalness: 0,
+      transparent: true,
+      opacity: 0.14,
+      castShadow: false,
+    })
+    carpet.position.y = 0.19
+    group.add(carpet)
+
+    const ceiling = this.box(this.floorWidth, 0.18, this.floorDepth, 0x132033, {
+      roughness: 0.66,
+      metalness: 0.22,
+    })
+    ceiling.position.y = this.floorHeight - 0.18
+    group.add(ceiling)
+
+    for (const x of [-9, -4.5, 0, 4.5, 9]) {
+      const lamp = this.box(2.2, 0.045, 0.65, 0xffffff, {
+        emissive: floor.color,
+        emissiveIntensity: 0.4,
+        roughness: 0.18,
+        castShadow: false,
+      })
+      lamp.position.set(x, this.floorHeight - 0.32, -1.5)
+      group.add(lamp)
+    }
+
+    const floorSign = this.createSprite(`F${String(floor.number).padStart(2, '0')} • ${floor.short.toUpperCase()}`, floor.subtitle, floor.color)
+    floorSign.scale.set(4.2, 1.16, 1)
+    floorSign.position.set(0, 3.65, -8.65)
+    group.add(floorSign)
+
+    const numberPylon = this.box(1.1, 2.5, 0.28, 0x07101a, { metalness: 0.55, roughness: 0.28 })
+    numberPylon.position.set(11.75, 1.48, 8.65)
+    group.add(numberPylon)
+    const numberTag = this.createSprite(String(floor.number).padStart(2, '0'), '', floor.color, { small: true })
+    numberTag.scale.set(1.1, 0.28, 1)
+    numberTag.position.set(11.75, 1.55, 8.82)
+    group.add(numberTag)
+
+    const hit = new THREE.Mesh(
+      new THREE.BoxGeometry(this.floorWidth - 0.5, 3.8, this.floorDepth - 0.5),
+      new THREE.MeshBasicMaterial({ visible: false }),
+    )
+    hit.position.y = 2
+    hit.userData.floorId = floor.id
+    group.add(hit)
+    this.clickables.push(hit)
+
+    const light = new THREE.PointLight(floor.color, 2.5, 18, 2)
+    light.position.set(0, 3.8, 1)
+    group.add(light)
+
+    const content = new THREE.Group()
+    content.position.y = 0.22
+    group.add(content)
+    this.buildFloorScene(content, floor)
+
+    this.scene.add(group)
+    this.floorObjects.set(floor.id, { group, slab, carpet, light, content, floor })
+  }
+
+  buildFloorScene(group, floor) {
+    switch (floor.scene) {
+      case 'reception': this.buildReception(group, floor); break
+      case 'teams': this.buildTeams(group, floor); break
+      case 'calls': this.buildCalls(group, floor); break
+      case 'apps': this.buildApps(group, floor); break
+      case 'database': this.buildDatabase(group, floor); break
+      case 'jobs': this.buildJobs(group, floor); break
+      case 'companies': this.buildCompanies(group, floor); break
+      case 'education': this.buildEducation(group, floor); break
+      case 'sourcing': this.buildSourcing(group, floor); break
+      case 'management': this.buildManagement(group, floor); break
+      default: this.addGenericStaff(group, floor, floor.people)
+    }
+    this.addMetricWall(group, floor)
+  }
+
+  createAvatar(color, scale = 1, badge = '') {
+    const group = new THREE.Group()
+    const body = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.14 * scale, 0.36 * scale, 4, 8),
+      this.material(color, { roughness: 0.62, emissive: color, emissiveIntensity: 0.08 }),
+    )
+    body.position.y = 0.58 * scale
+    group.add(body)
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.145 * scale, 10, 8),
+      this.material(0xd4a27d, { roughness: 0.9 }),
+    )
+    head.position.y = 0.97 * scale
+    group.add(head)
+    for (const x of [-0.075, 0.075]) {
+      const leg = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.045 * scale, 0.25 * scale, 3, 6),
+        this.material(0x202a38, { roughness: 0.78 }),
+      )
+      leg.position.set(x * scale, 0.2 * scale, 0)
+      group.add(leg)
+    }
+    if (badge) {
+      const tag = this.createSprite(badge, '', color, { small: true })
+      tag.scale.set(0.82 * scale, 0.19 * scale, 1)
+      tag.position.set(0, 1.36 * scale, 0)
+      group.add(tag)
+    }
+    return group
+  }
+
+  createDesk(color = '#79d7ff', compact = false) {
+    const group = new THREE.Group()
+    const width = compact ? 0.8 : 1.15
+    const top = this.box(width, 0.07, compact ? 0.42 : 0.55, 0xdbe3ef, { roughness: 0.75, metalness: 0.04 })
+    top.position.y = 0.65
+    group.add(top)
+    for (const x of [-width * 0.38, width * 0.38]) {
+      const leg = this.box(0.045, 0.62, 0.045, 0x65758a, { metalness: 0.38, roughness: 0.35 })
+      leg.position.set(x, 0.31, 0)
+      group.add(leg)
+    }
+    const monitor = this.box(compact ? 0.31 : 0.42, compact ? 0.2 : 0.28, 0.03, 0x101722, {
+      emissive: color,
+      emissiveIntensity: 0.45,
+      roughness: 0.16,
+    })
+    monitor.position.set(0, 0.87, -0.05)
+    group.add(monitor)
+    return group
+  }
+
+  createWorkstation(color, badge, compact = false) {
+    const group = new THREE.Group()
+    group.add(this.createDesk(color, compact))
+    const avatar = this.createAvatar(color, compact ? 0.72 : 0.85, badge)
+    avatar.position.set(0, 0.03, compact ? 0.31 : 0.38)
+    avatar.rotation.y = Math.PI
+    group.add(avatar)
+    return group
+  }
+
+  addGenericStaff(group, floor, count) {
+    const columns = Math.min(8, Math.ceil(Math.sqrt(count * 1.5)))
+    const rows = Math.ceil(count / columns)
+    const sx = 2.25
+    const sz = 2.05
+    const totalW = (columns - 1) * sx
+    const totalD = (rows - 1) * sz
+    for (let index = 0; index < count; index++) {
+      const station = this.createWorkstation(floor.color, `${floor.short.slice(0, 2).toUpperCase()}-${String(index + 1).padStart(2, '0')}`, count > 18)
+      station.position.set((index % columns) * sx - totalW / 2, 0, Math.floor(index / columns) * sz - totalD / 2 + 0.8)
+      group.add(station)
+    }
+  }
+
+  buildReception(group, floor) {
+    const desk = this.box(8.4, 1.05, 1.25, 0x132d46, { metalness: 0.36, roughness: 0.32 })
+    desk.position.set(0, 0.55, 2.8)
+    group.add(desk)
+    const face = this.box(7.8, 0.62, 0.06, 0x79d7ff, { emissive: 0x79d7ff, emissiveIntensity: 0.75, transparent: true, opacity: 0.75 })
+    face.position.set(0, 0.58, 3.44)
+    group.add(face)
+
+    for (const x of [-2.6, 0, 2.6]) {
+      const avatar = this.createAvatar(floor.color, 1, x === 0 ? 'WELCOME' : `GUIDE ${x < 0 ? 'A' : 'B'}`)
+      avatar.position.set(x, 0.1, 2)
+      group.add(avatar)
+    }
+
+    const nodes = [
+      ['WORKERS', '#52e0ba'], ['JOBS', '#ffd166'], ['CALLS', '#ff9f6e'], ['COMPANIES', '#4cc9f0'], ['CONTROL', '#a7f3d0'],
+    ]
+    nodes.forEach(([name, color], index) => {
+      const angle = (index / nodes.length) * Math.PI * 2
+      const x = Math.cos(angle) * 5.3
+      const z = Math.sin(angle) * 3.1 - 1.4
+      const pedestal = this.cylinder(0.75, 0.9, 0.32, color, { metalness: 0.5, roughness: 0.3, emissive: color, emissiveIntensity: 0.25 })
+      pedestal.position.set(x, 0.18, z)
+      group.add(pedestal)
+      const tag = this.createSprite(name, '', color, { small: true })
+      tag.scale.set(1.25, 0.28, 1)
+      tag.position.set(x, 1.05, z)
+      group.add(tag)
+    })
+  }
+
+  buildTeams(group) {
+    const layouts = {
+      yellow: [-7.2, -3.7, 5, 1.18, 1.18],
+      blue: [6.7, -3.7, 5, 1.18, 1.18],
+      posting: [-5.6, 4.6, 5, 1.18, 1.18],
+      classic: [4.8, 4.5, 4, 1.25, 1.25],
+      red: [9.1, 4.9, 3, 1.2, 1.2],
+    }
+    for (const team of this.teams) {
+      const [originX, originZ, columns, sx, sz] = layouts[team.id]
+      const zone = new THREE.Group()
+      zone.position.set(originX, 0, originZ)
+      const rows = Math.ceil(team.count / columns)
+      const activeColumns = Math.min(columns, team.count)
+      const width = (activeColumns - 1) * sx + 1.4
+      const depth = (rows - 1) * sz + 1.5
+      const pad = this.box(width, 0.025, depth, team.accent, { transparent: true, opacity: 0.55, roughness: 0.98, castShadow: false })
+      pad.position.y = 0.02
+      zone.add(pad)
+      const sign = this.createSprite(team.name.toUpperCase(), `${team.count} locuri`, team.color, { small: true })
+      sign.scale.set(1.65, 0.38, 1)
+      sign.position.set(0, 2.1, -depth / 2 + 0.1)
+      zone.add(sign)
+      const totalW = (activeColumns - 1) * sx
+      const totalD = (rows - 1) * sz
+      team.people.forEach((agentId, index) => {
+        const avatar = this.createAvatar(team.color, 0.58, agentId)
+        avatar.position.set((index % columns) * sx - totalW / 2, 0.05, Math.floor(index / columns) * sz - totalD / 2)
+        zone.add(avatar)
+      })
+      group.add(zone)
+    }
+  }
+
+  buildCalls(group, floor) {
+    const colors = ['#ffd21f', '#3b82f6', '#ff4d68', '#a855f7', '#20c7aa']
+    const names = ['YELLOW', 'BLUE', 'RED', 'POSTING', 'CLASSIC']
+    const positions = [[-7.2, -3.2], [0, -3.2], [7.2, -3.2], [-3.6, 3.8], [3.6, 3.8]]
+    positions.forEach(([x, z], index) => {
+      const pod = new THREE.Group()
+      pod.position.set(x, 0, z)
+      const pad = this.box(5.7, 0.03, 4.2, colors[index], { transparent: true, opacity: 0.18, castShadow: false })
+      pad.position.y = 0.02
+      pod.add(pad)
+      const wall = this.box(5.1, 1.7, 0.18, 0x0e1725, { metalness: 0.4, roughness: 0.25 })
+      wall.position.set(0, 2.4, -1.75)
+      pod.add(wall)
+      const screen = this.box(4.6, 1.25, 0.04, 0x111827, { emissive: colors[index], emissiveIntensity: 0.32 })
+      screen.position.set(0, 2.4, -1.63)
+      pod.add(screen)
+      const tag = this.createSprite(names[index], 'recording • transcript • summary', colors[index], { small: true })
+      tag.scale.set(2.6, 0.6, 1)
+      tag.position.set(0, 2.4, -1.55)
+      pod.add(tag)
+      for (const dx of [-1.35, 0, 1.35]) {
+        const station = this.createWorkstation(colors[index], '', true)
+        station.position.set(dx, 0, 0.65)
+        pod.add(station)
+      }
+      group.add(pod)
+    })
+
+    for (let index = 0; index < 18; index++) {
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), this.material(floor.color, { emissive: floor.color, emissiveIntensity: 1.5 }))
+      dot.position.set(-8 + (index % 9) * 2, 3.6 + Math.floor(index / 9) * 0.35, -0.2)
+      group.add(dot)
+      this.animated.push({ object: dot, type: 'wave', seed: index })
+    }
+  }
+
+  buildApps(group) {
+    const items = apps.filter(app => ['blue', 'yellow', 'red', 'iza', 'jobboard'].includes(app.id))
+    const positions = [[-7.5, -3.5], [0, -3.5], [7.5, -3.5], [-3.8, 4.2], [3.8, 4.2]]
+    const colors = ['#3b82f6', '#ffd21f', '#ff4d68', '#b98cff', '#ffd166']
+    items.forEach((app, index) => {
+      const [x, z] = positions[index]
+      const kiosk = new THREE.Group()
+      kiosk.position.set(x, 0, z)
+      const base = this.cylinder(1.45, 1.65, 0.32, colors[index], { metalness: 0.55, roughness: 0.25, emissive: colors[index], emissiveIntensity: 0.2 })
+      base.position.y = 0.16
+      kiosk.add(base)
+      const tower = this.box(2.6, 2.15, 0.28, 0x0f1826, { metalness: 0.4, roughness: 0.22 })
+      tower.position.y = 1.45
+      kiosk.add(tower)
+      const display = this.box(2.25, 1.72, 0.04, 0x111827, { emissive: colors[index], emissiveIntensity: 0.34 })
+      display.position.set(0, 1.45, 0.17)
+      kiosk.add(display)
+      const tag = this.createSprite(app.name.toUpperCase(), app.description, colors[index], { small: true })
+      tag.scale.set(2.25, 0.52, 1)
+      tag.position.set(0, 1.45, 0.22)
+      kiosk.add(tag)
+      group.add(kiosk)
+    })
+  }
+
+  buildDatabase(group, floor) {
+    for (let row = 0; row < 2; row++) {
+      for (let column = 0; column < 6; column++) {
+        const rack = new THREE.Group()
+        rack.position.set(-8.5 + column * 3.4, 0, -3.1 + row * 6.1)
+        const frame = this.box(1.6, 2.9, 1.05, 0x111a27, { metalness: 0.65, roughness: 0.24 })
+        frame.position.y = 1.45
+        rack.add(frame)
+        for (let slot = 0; slot < 7; slot++) {
+          const unit = this.box(1.35, 0.23, 0.08, 0x1d3043, { emissive: slot % 2 ? floor.color : 0x3b82f6, emissiveIntensity: 0.42 })
+          unit.position.set(0, 0.42 + slot * 0.34, 0.57)
+          rack.add(unit)
+        }
+        group.add(rack)
+      }
+    }
+    const pipeline = ['IMPORT', 'PHONE', 'DEDUPE', 'POSTCODE', 'TRADE', 'CURATED']
+    pipeline.forEach((step, index) => {
+      const x = -9 + index * 3.6
+      const node = this.cylinder(0.55, 0.65, 0.22, floor.color, { emissive: floor.color, emissiveIntensity: 0.5, metalness: 0.5 })
+      node.position.set(x, 0.2, 0)
+      group.add(node)
+      const tag = this.createSprite(step, '', floor.color, { small: true })
+      tag.scale.set(1.05, 0.24, 1)
+      tag.position.set(x, 0.92, 0)
+      group.add(tag)
+    })
+  }
+
+  buildJobs(group, floor) {
+    const board = this.box(10.8, 3.0, 0.22, 0x101927, { metalness: 0.4, roughness: 0.26 })
+    board.position.set(0, 2.1, -6.8)
+    group.add(board)
+    const lanes = ['NEW', 'MATCHING', 'CLAIMED', 'WORKER FOUND', 'FILLED']
+    lanes.forEach((lane, index) => {
+      const x = -4.25 + index * 2.1
+      const panel = this.box(1.75, 2.45, 0.04, 0x172436, { emissive: index === 4 ? 0x52e0ba : floor.color, emissiveIntensity: 0.18 })
+      panel.position.set(x, 2.1, -6.65)
+      group.add(panel)
+      const tag = this.createSprite(lane, '', index === 4 ? '#52e0ba' : floor.color, { small: true })
+      tag.scale.set(1.25, 0.27, 1)
+      tag.position.set(x, 3.05, -6.55)
+      group.add(tag)
+      for (let card = 0; card < 3; card++) {
+        const job = this.box(1.3, 0.3, 0.035, card % 2 ? 0x2b3e56 : 0x344a64, { emissive: floor.color, emissiveIntensity: 0.08 })
+        job.position.set(x, 1.2 + card * 0.55, -6.57)
+        group.add(job)
+      }
+    })
+    this.addGenericStaff(group, floor, 12)
+  }
+
+  buildCompanies(group, floor) {
+    const skylineX = [-9, -6.5, -4, -1.5, 1.5, 4, 6.5, 9]
+    skylineX.forEach((x, index) => {
+      const height = 1.6 + (index % 4) * 0.55
+      const building = this.box(1.65, height, 1.65, index % 2 ? 0x16314a : 0x1d3a55, { metalness: 0.4, roughness: 0.35, emissive: floor.color, emissiveIntensity: 0.06 })
+      building.position.set(x, height / 2, -5.6)
+      group.add(building)
+      for (let row = 0; row < 3; row++) {
+        const light = this.box(1.1, 0.1, 0.03, floor.color, { emissive: floor.color, emissiveIntensity: 0.6 })
+        light.position.set(x, 0.55 + row * 0.48, -4.75)
+        group.add(light)
+      }
+    })
+    const stages = ['PROSPECT', 'FIRST CALL', 'NEED', 'JOB', 'RECOVERY']
+    stages.forEach((stage, index) => {
+      const x = -7.6 + index * 3.8
+      const desk = this.createWorkstation(floor.color, `F-${String(index + 1).padStart(2, '0')}`)
+      desk.position.set(x, 0, 3)
+      group.add(desk)
+      const tag = this.createSprite(stage, '', floor.color, { small: true })
+      tag.scale.set(1.4, 0.31, 1)
+      tag.position.set(x, 2.15, 3)
+      group.add(tag)
+    })
+  }
+
+  buildEducation(group, floor) {
+    const screen = this.box(12, 3.1, 0.22, 0x101927, { metalness: 0.4, roughness: 0.25 })
+    screen.position.set(0, 2.2, -6.6)
+    group.add(screen)
+    const display = this.box(11.4, 2.5, 0.04, 0x111827, { emissive: floor.color, emissiveIntensity: 0.23 })
+    display.position.set(0, 2.2, -6.45)
+    group.add(display)
+    const tag = this.createSprite('ONBOARDING ACADEMY', 'Orientare → practică → QA → producție', floor.color)
+    tag.scale.set(5.6, 1.45, 1)
+    tag.position.set(0, 2.2, -6.35)
+    group.add(tag)
+    for (let row = 0; row < 3; row++) {
+      for (let column = 0; column < 6; column++) {
+        const x = -6.25 + column * 2.5
+        const z = -1.7 + row * 2.6
+        const chair = this.box(0.75, 0.62, 0.75, 0x263a55, { roughness: 0.78 })
+        chair.position.set(x, 0.35, z)
+        group.add(chair)
+        if (row * 6 + column < 10) {
+          const avatar = this.createAvatar(floor.color, 0.72, `N-${String(row * 6 + column + 1).padStart(2, '0')}`)
+          avatar.position.set(x, 0.05, z - 0.18)
+          avatar.rotation.y = Math.PI
+          group.add(avatar)
+        }
+      }
+    }
+  }
+
+  buildSourcing(group, floor) {
+    const map = this.cylinder(4.2, 4.2, 0.18, 0x17324a, { metalness: 0.35, roughness: 0.4 })
+    map.position.set(0, 0.12, -0.5)
+    group.add(map)
+    const communities = [
+      ['RO', -2.4, -0.5], ['PL', -0.8, -2.2], ['BG', 1.4, -1.8], ['AL', 2.6, 0.2], ['UA', 0.8, 2.1], ['AF', -1.6, 1.8],
+    ]
+    communities.forEach(([name, x, z], index) => {
+      const node = this.cylinder(0.42, 0.5, 0.28, index % 2 ? floor.color : 0xffd166, { emissive: index % 2 ? floor.color : 0xffd166, emissiveIntensity: 0.5, metalness: 0.5 })
+      node.position.set(x, 0.36, z - 0.5)
+      group.add(node)
+      const tag = this.createSprite(name, '', floor.color, { small: true })
+      tag.scale.set(0.7, 0.16, 1)
+      tag.position.set(x, 0.95, z - 0.5)
+      group.add(tag)
+    })
+    const trades = ['LAB', 'CARP', 'DRY', 'PAINT', 'ELEC', 'PLUMB', 'BRICK', 'GROUND', 'FIRE', 'PLANT']
+    trades.forEach((trade, index) => {
+      const angle = (index / trades.length) * Math.PI * 2
+      const x = Math.cos(angle) * 7.7
+      const z = Math.sin(angle) * 6.1
+      const tag = this.createSprite(trade, '', index % 2 ? '#ffd166' : floor.color, { small: true })
+      tag.scale.set(0.9, 0.2, 1)
+      tag.position.set(x, 1.05, z)
+      group.add(tag)
+      const avatar = this.createAvatar(index % 2 ? '#ffd166' : floor.color, 0.62, '')
+      avatar.position.set(x, 0.05, z)
+      group.add(avatar)
+    })
+  }
+
+  buildManagement(group, floor) {
+    const wall = this.box(20.5, 3.2, 0.22, 0x0d1724, { metalness: 0.52, roughness: 0.22 })
+    wall.position.set(0, 2.35, -6.8)
+    group.add(wall)
+    const cards = [
+      ['PEOPLE', '78'], ['DATA', '71,779'], ['JOBS', '109'], ['COMPANIES', '25'], ['OFFERS', '22'],
+    ]
+    cards.forEach(([name, value], index) => {
+      const x = -8.4 + index * 4.2
+      const panel = this.box(3.5, 2.45, 0.04, 0x142237, { emissive: index % 2 ? floor.color : 0x79d7ff, emissiveIntensity: 0.18 })
+      panel.position.set(x, 2.35, -6.65)
+      group.add(panel)
+      const tag = this.createSprite(value, name, index % 2 ? floor.color : '#79d7ff', { small: true })
+      tag.scale.set(2.15, 0.5, 1)
+      tag.position.set(x, 2.35, -6.55)
+      group.add(tag)
+    })
+
+    const risks = [['DUPLICATES', '#ff6b6b'], ['MISSING DATA', '#ffd166'], ['SYNC', '#79d7ff'], ['PIPELINE AI', '#b98cff']]
+    risks.forEach(([name, color], index) => {
+      const x = -7.2 + index * 4.8
+      const tower = this.cylinder(0.8, 1, 1.3 + index * 0.28, color, { emissive: color, emissiveIntensity: 0.33, metalness: 0.45 })
+      tower.position.set(x, tower.geometry.parameters.height / 2, 2.7)
+      group.add(tower)
+      const tag = this.createSprite(name, '', color, { small: true })
+      tag.scale.set(1.35, 0.3, 1)
+      tag.position.set(x, 2.3 + index * 0.28, 2.7)
+      group.add(tag)
+    })
+
+    const table = this.cylinder(3.5, 3.5, 0.16, 0x1b2c40, { metalness: 0.45, roughness: 0.35 })
+    table.position.set(0, 0.75, 6)
+    group.add(table)
+    for (let index = 0; index < 8; index++) {
+      const angle = (index / 8) * Math.PI * 2
+      const avatar = this.createAvatar(floor.color, 0.75, `M-${index + 1}`)
+      avatar.position.set(Math.cos(angle) * 4.6, 0.03, 6 + Math.sin(angle) * 3.3)
+      avatar.rotation.y = -angle + Math.PI / 2
+      group.add(avatar)
+    }
+  }
+
+  addMetricWall(group, floor) {
+    const wall = this.box(4.25, 3.1, 0.18, 0x0b1422, { metalness: 0.42, roughness: 0.24 })
+    wall.position.set(-10.7, 2.2, 5.7)
+    group.add(wall)
+    floor.metrics.slice(0, 4).forEach(([value, label], index) => {
+      const y = 3.25 - index * 0.7
+      const barWidth = 0.8 + (index + 1) * 0.62
+      const bar = this.box(barWidth, 0.16, 0.04, floor.color, { emissive: floor.color, emissiveIntensity: 0.45 })
+      bar.position.set(-11.4 + barWidth / 2, y, 5.82)
+      group.add(bar)
+      const tag = this.createSprite(`${value} • ${label}`, '', floor.color, { small: true })
+      tag.scale.set(1.75, 0.4, 1)
+      tag.position.set(-10.7, y + 0.26, 5.88)
+      group.add(tag)
+    })
+  }
+
+  bindEvents() {
+    this.canvas.addEventListener('pointerdown', event => {
+      const rect = this.canvas.getBoundingClientRect()
+      this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      this.raycaster.setFromCamera(this.pointer, this.camera)
+      const hit = this.raycaster.intersectObjects(this.clickables, true)[0]
+      if (!hit) return
+      const floorId = hit.object.userData.floorId
+      if (floorId && this.onFloorSelected) this.onFloorSelected(floorId)
+    })
+
+    window.addEventListener('resize', () => {
+      this.camera.aspect = innerWidth / innerHeight
+      this.camera.updateProjectionMatrix()
+      this.renderer.setSize(innerWidth, innerHeight)
+    })
+  }
+
+  focusFloor(floorId, instant = false) {
+    const record = this.floorObjects.get(floorId)
+    if (!record) return
+    this.currentFloorId = floorId
+    const y = record.group.position.y
+    const narrow = innerWidth < 700
+    const position = new THREE.Vector3(narrow ? 30 : 25, y + (narrow ? 8 : 7), narrow ? 31 : 24)
+    const target = new THREE.Vector3(0, y + 1.8, 0)
+    if (instant) {
+      this.camera.position.copy(position)
+      this.controls.target.copy(target)
+    } else {
+      this.targetCamera = { position, target }
+    }
+    this.updateHighlight()
+  }
+
+  towerView() {
+    this.targetCamera = {
+      position: new THREE.Vector3(innerWidth < 700 ? 52 : 42, 32, innerWidth < 700 ? 72 : 58),
+      target: new THREE.Vector3(0, 21, 0),
+    }
+  }
+
+  updateHighlight() {
+    this.floorObjects.forEach((record, id) => {
+      const active = id === this.currentFloorId
+      record.light.intensity = active ? 7.5 : 1.45
+      record.carpet.material.opacity = active ? 0.54 : 0.11
+      record.content.visible = active || innerWidth >= 760
+      record.group.traverse(object => {
+        if (object.isSprite) object.visible = active || object.position.z < -8
+      })
+    })
+  }
+
+  animate() {
+    requestAnimationFrame(() => this.animate())
+    const time = performance.now() * 0.001
+    for (const item of this.animated) {
+      if (item.type === 'beacon') {
+        item.object.material.emissiveIntensity = 1.6 + Math.sin(time * 2.2) * 0.7
+        item.object.rotation.y += 0.004
+      } else if (item.type === 'wave') {
+        item.object.position.y += Math.sin(time * 3 + item.seed) * 0.0008
+        item.object.material.emissiveIntensity = 0.8 + Math.sin(time * 4 + item.seed) * 0.5
+      }
+    }
+    if (this.targetCamera) {
+      this.camera.position.lerp(this.targetCamera.position, 0.075)
+      this.controls.target.lerp(this.targetCamera.target, 0.075)
+      if (
+        this.camera.position.distanceTo(this.targetCamera.position) < 0.05 &&
+        this.controls.target.distanceTo(this.targetCamera.target) < 0.05
+      ) this.targetCamera = null
+    }
+    this.controls.update()
+    this.renderer.render(this.scene, this.camera)
+  }
+}
+
+const ui = {
+  floorList: $('#floor-list'),
+  floorProgress: $('#floor-progress'),
+  detail: $('#floor-detail'),
+  detailEyebrow: $('#detail-eyebrow'),
+  detailTitle: $('#detail-title'),
+  detailSubtitle: $('#detail-subtitle'),
+  detailDescription: $('#detail-description'),
+  detailMetrics: $('#detail-metrics'),
+  workflow: $('#workflow-steps'),
+  canDo: $('#what-you-can-do'),
+  floorRoles: $('#floor-roles'),
+  floorApps: $('#floor-apps'),
+  missionList: $('#mission-list'),
+  missionBar: $('#mission-progress-bar'),
+  visitorLevel: $('#visitor-level'),
+  visitorXp: $('#visitor-xp'),
+  consoleNumber: $('#console-number'),
+  consoleTitle: $('#console-title'),
+  consoleStatus: $('#console-status'),
+  consoleMeter: $('#console-meter-bar'),
+  tourButton: $('#tour-toggle'),
+  drawer: $('#drawer'),
+  drawerBackdrop: $('#drawer-backdrop'),
+  drawerContent: $('#drawer-content'),
+  drawerEyebrow: $('#drawer-eyebrow'),
+  drawerTitle: $('#drawer-title'),
+}
+
+const state = {
+  currentIndex: 0,
+  visited: new Set(),
+  completedMissions: new Set(),
+  xp: 0,
+  tourTimer: null,
+  tourRunning: false,
+  drawerTab: 'guide',
+}
+
+const tower = new BusinessTower3D($('#world'), businessFloors, teams)
+tower.onFloorSelected = floorId => selectFloor(floorId)
+
+function floorById(id) {
+  return businessFloors.find(floor => floor.id === id)
+}
+
+function renderFloorList() {
+  ui.floorList.innerHTML = businessFloors.map(floor => `
+    <button class="floor-btn" data-floor="${floor.id}" style="--floor-color:${floor.color}">
+      <span class="floor-number">${String(floor.number).padStart(2, '0')}</span>
+      <span class="floor-copy"><strong>${floor.short}</strong><span>${floor.subtitle}</span></span>
+      <span class="floor-icon">${floor.icon}</span>
+    </button>
+  `).join('')
+  ui.floorList.querySelectorAll('[data-floor]').forEach(button => {
+    button.addEventListener('click', () => selectFloor(button.dataset.floor))
+  })
+  updateFloorButtons()
+}
+
+function updateFloorButtons() {
+  const current = businessFloors[state.currentIndex]
+  ui.floorList.querySelectorAll('[data-floor]').forEach(button => {
+    button.classList.toggle('active', button.dataset.floor === current.id)
+    button.classList.toggle('visited', state.visited.has(button.dataset.floor))
+  })
+  ui.floorProgress.textContent = `${state.visited.size}/10`
+}
+
+function renderFloorDetail(floor) {
+  document.documentElement.style.setProperty('--accent', floor.color)
+  ui.detailEyebrow.textContent = `FLOOR ${String(floor.number).padStart(2, '0')} • ${floor.icon}`
+  ui.detailTitle.textContent = floor.title
+  ui.detailSubtitle.textContent = floor.subtitle
+  ui.detailDescription.textContent = floor.description
+  ui.detailMetrics.innerHTML = floor.metrics.map(([value, label]) => `
+    <div class="metric-card"><strong>${value}</strong><span>${label}</span></div>
+  `).join('')
+  ui.workflow.innerHTML = floor.workflow.map((step, index) => `
+    <div class="workflow-step" data-step="${index + 1}">${step}</div>
+  `).join('')
+  ui.canDo.innerHTML = floor.whatYouCanDo.map(item => `<span class="chip">${item}</span>`).join('')
+  ui.floorRoles.innerHTML = floor.roles.map(item => `<span class="chip">${item}</span>`).join('')
+  ui.floorApps.innerHTML = floor.apps.map(item => `<span class="chip">${item}</span>`).join('')
+  ui.detail.classList.add('open')
+  ui.consoleNumber.textContent = String(floor.number).padStart(2, '0')
+  ui.consoleTitle.textContent = floor.short
+  ui.consoleStatus.textContent = floor.subtitle
+  ui.consoleMeter.style.width = `${floor.number * 10}%`
+}
+
+function selectFloor(id, options = {}) {
+  const index = businessFloors.findIndex(floor => floor.id === id)
+  if (index < 0) return
+  state.currentIndex = index
+  const floor = businessFloors[index]
+  const firstVisit = !state.visited.has(id)
+  state.visited.add(id)
+  if (firstVisit) state.xp += 100
+  tower.focusFloor(id, options.instant ?? false)
+  renderFloorDetail(floor)
+  evaluateMissions(id)
+  updateFloorButtons()
+  updateProgress()
+}
+
+function evaluateMissions(currentFloorId) {
+  visitorMissions.forEach(mission => {
+    if (state.completedMissions.has(mission.id)) return
+    const completed = mission.type === 'floors'
+      ? state.visited.size >= mission.target
+      : mission.type === 'floor'
+        ? currentFloorId === mission.floorId
+        : false
+    if (completed) {
+      state.completedMissions.add(mission.id)
+      state.xp += 250
+    }
+  })
+  renderMissions()
+}
+
+function completeCareerMission() {
+  if (!state.completedMissions.has('career')) {
+    state.completedMissions.add('career')
+    state.xp += 250
+    renderMissions()
+    updateProgress()
+  }
+}
+
+function renderMissions() {
+  ui.missionList.innerHTML = visitorMissions.map(mission => {
+    const done = state.completedMissions.has(mission.id)
+    const progress = mission.type === 'floors' ? `${Math.min(state.visited.size, 10)}/10` : done ? '1/1' : '0/1'
+    return `
+      <div class="mission-item ${done ? 'done' : ''}">
+        <span class="mission-check">${done ? '✓' : '•'}</span>
+        <span><strong>${mission.title}</strong><span>${mission.description}</span></span>
+        <span class="mission-reward">${progress}</span>
+      </div>
+    `
+  }).join('')
+  const percent = (state.completedMissions.size / visitorMissions.length) * 100
+  ui.missionBar.style.width = `${percent}%`
+}
+
+function updateProgress() {
+  const level = Math.floor(state.xp / 500) + 1
+  ui.visitorLevel.textContent = `Vizitator • Nivel ${level}`
+  ui.visitorXp.textContent = `${state.xp} XP`
+}
+
+function moveFloor(delta) {
+  const nextIndex = clamp(state.currentIndex + delta, 0, businessFloors.length - 1)
+  selectFloor(businessFloors[nextIndex].id)
+}
+
+function toggleTour(force) {
+  const shouldRun = typeof force === 'boolean' ? force : !state.tourRunning
+  if (shouldRun === state.tourRunning) return
+  state.tourRunning = shouldRun
+  ui.tourButton.classList.toggle('running', shouldRun)
+  ui.tourButton.textContent = shouldRun ? '■ Oprește turul' : '▶ Tur automat'
+  if (state.tourTimer) clearInterval(state.tourTimer)
+  if (shouldRun) {
+    ui.consoleStatus.textContent = 'Tur automat activ • următorul etaj în câteva secunde'
+    state.tourTimer = setInterval(() => {
+      const next = (state.currentIndex + 1) % businessFloors.length
+      selectFloor(businessFloors[next].id)
+    }, 6500)
+  } else {
+    state.tourTimer = null
+  }
+}
+
+function guideMarkup() {
+  return `
+    <div class="guide-hero">
+      <h3>Ce face businessul?</h3>
+      <p>Compania combină recrutarea pentru construcții, sourcing-ul de muncitori, baze de date mari, potrivirea cu joburi, apelurile către muncitori și companii, analiza AI și controlul operațional.</p>
+    </div>
+    <div class="privacy-banner"><strong>Mod public sigur:</strong> această experiență folosește cifre agregate, roluri și ID-uri anonimizate. Nu afișează telefoane, emailuri, adrese, chei sau URL-uri private.</div>
+    <div class="guide-grid">
+      ${businessFloors.map(floor => `
+        <article class="guide-card">
+          <strong style="color:${floor.color}">F${String(floor.number).padStart(2, '0')} • ${floor.title}</strong>
+          <p>${floor.description}</p>
+        </article>
+      `).join('')}
+    </div>
+  `
+}
+
+function careersMarkup() {
+  return `<div class="career-grid">${roles.map(role => `
+    <article class="career-card">
+      <div class="career-icon">${role.icon}</div>
+      <strong>${role.name}</strong>
+      <p>${role.outcome}</p>
+      <div class="career-skills">${role.skills.map(skill => `<span>${skill}</span>`).join('')}</div>
+    </article>
+  `).join('')}</div>`
+}
+
+function appsMarkup() {
+  return `
+    <div class="privacy-banner">Portofoliu public: descrierile explică rolul produselor, nu includ configurații, credențiale sau baze private.</div>
+    <div class="app-grid">${apps.map(app => `
+      <article class="app-card">
+        <strong>${app.name}</strong>
+        <p>${app.description}</p>
+        <div class="app-meta"><span>${app.category}</span><span>${app.status}</span></div>
+      </article>
+    `).join('')}</div>
+  `
+}
+
+function glossaryMarkup() {
+  return `<div class="glossary-grid">${glossary.map(([term, definition]) => `
+    <article class="glossary-card"><strong>${term}</strong><p>${definition}</p></article>
+  `).join('')}</div>`
+}
+
+function openDrawer(tab = 'guide') {
+  state.drawerTab = tab
+  ui.drawer.classList.add('open')
+  ui.drawer.setAttribute('aria-hidden', 'false')
+  ui.drawerBackdrop.classList.add('open')
+  document.querySelectorAll('[data-drawer-tab]').forEach(button => button.classList.toggle('active', button.dataset.drawerTab === tab))
+  const tabConfig = {
+    guide: ['COMPANY GUIDE', 'Cum funcționează compania', guideMarkup],
+    careers: ['CAREER MAP', 'Ce poți face în companie', careersMarkup],
+    apps: ['PRODUCT MAP', 'Aplicații și sisteme', appsMarkup],
+    glossary: ['BUSINESS DICTIONARY', 'Termeni importanți', glossaryMarkup],
+  }
+  const [eyebrow, title, render] = tabConfig[tab]
+  ui.drawerEyebrow.textContent = eyebrow
+  ui.drawerTitle.textContent = title
+  ui.drawerContent.innerHTML = render()
+  if (tab === 'careers') completeCareerMission()
+}
+
+function closeDrawer() {
+  ui.drawer.classList.remove('open')
+  ui.drawer.setAttribute('aria-hidden', 'true')
+  ui.drawerBackdrop.classList.remove('open')
+}
+
+$('#tour-toggle').addEventListener('click', () => toggleTour())
+$('#previous-floor').addEventListener('click', () => moveFloor(-1))
+$('#next-floor').addEventListener('click', () => moveFloor(1))
+$('#tower-view').addEventListener('click', () => tower.towerView())
+$('#close-detail').addEventListener('click', () => ui.detail.classList.remove('open'))
+$('#open-guide').addEventListener('click', () => openDrawer('guide'))
+$('#open-careers').addEventListener('click', () => openDrawer('careers'))
+$('#close-drawer').addEventListener('click', closeDrawer)
+ui.drawerBackdrop.addEventListener('click', closeDrawer)
+document.querySelectorAll('[data-drawer-tab]').forEach(button => {
+  button.addEventListener('click', () => openDrawer(button.dataset.drawerTab))
+})
+window.addEventListener('keydown', event => {
+  if (event.key === 'ArrowUp') moveFloor(1)
+  if (event.key === 'ArrowDown') moveFloor(-1)
+  if (event.key === 'Escape') {
+    closeDrawer()
+    ui.detail.classList.remove('open')
+  }
+})
+
+renderFloorList()
+renderMissions()
+updateProgress()
+selectFloor('welcome', { instant: true })
+setTimeout(() => tower.towerView(), 900)
