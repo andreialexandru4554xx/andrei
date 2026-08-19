@@ -93,9 +93,12 @@
       <div class="access-logo">RF</div>
       <span class="eyebrow dark" data-i18n="access_eyebrow">IDENTIFICARE AGENT</span>
       <h2 data-i18n="access_title">Spune-ne cine ești</h2>
-      <p data-i18n="access_description">Introdu doar numele tău, ca să se vadă cine postează și cine revendică fiecare job.</p>
+      <p data-i18n="access_description">Introdu numele și emailul folosit în Blue. Emailul leagă automat claim-urile de contul tău RecruitFlow.</p>
       <label><span data-i18n="agent_name_label">Numele tău / numele secondului</span>
         <input id="accessAgent" name="agent" type="text" maxlength="80" autocomplete="name" placeholder="Ex: Andrei" data-i18n-placeholder="agent_name_placeholder" required>
+      </label>
+      <label><span data-i18n="agent_email_label">Emailul folosit în Blue</span>
+        <input id="accessEmail" name="email" type="email" maxlength="254" autocomplete="email" placeholder="Ex: nume@companie.com" data-i18n-placeholder="agent_email_placeholder" required>
       </label>
       <p id="accessError" class="form-error" role="alert" hidden></p>
       <button class="primary wide" type="submit"><span data-i18n="continue_button">Continuă</span><span>→</span></button>
@@ -223,7 +226,7 @@
   <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
   <div id="loadingOverlay" class="loading-overlay" hidden><span class="spinner"></span><strong data-i18n="saving">Se salvează…</strong></div>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
   <script src="multi-worker.js?v=1"></script>
   <script src="live-board-filter.js?v=1"></script>
 </body>
