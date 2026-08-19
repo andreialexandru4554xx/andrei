@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#07111c" />
+  <title>Office Room 3D</title>
+  <link rel="stylesheet" href="./office.css" />
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}
+  </script>
+</head>
+<body>
+  <canvas id="office-world"></canvas>
+  <header class="office-topbar">
+    <div>
+      <div class="eyebrow">ROOM 02 • OFFICE STRUCTURE</div>
+      <h1>Office Room</h1>
+      <p>Fiecare office are oamenii lui. Badge-ul arată clar FIRST sau SECOND.</p>
+    </div>
+    <div class="actions">
+      <a href="./index.html" class="btn">← Open Space</a>
+      <button id="overview" class="btn primary">Vedere generală</button>
+    </div>
+  </header>
+
+  <aside class="legend">
+    <div class="legend-title">Roluri</div>
+    <div><span class="role-dot second"></span><b>SECOND</b><small>rosterul cunoscut acum</small></div>
+    <div><span class="role-dot first"></span><b>FIRST</b><small>loc pregătit pentru numele reale</small></div>
+  </aside>
+
+  <section class="office-panel" id="office-panel">
+    <div class="eyebrow" id="panel-eyebrow">OFFICE</div>
+    <h2 id="panel-title">Selectează un office</h2>
+    <p id="panel-copy">Apasă pe una dintre zonele 3D.</p>
+    <div id="people-list" class="people-list"></div>
+  </section>
+
+  <div class="help">Drag = rotire • Wheel = zoom • Click office = focus</div>
+  <script type="module" src="./src/office.js"></script>
+</body>
+</html>
