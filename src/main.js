@@ -812,7 +812,7 @@ class BusinessTower3D {
       const active = id === this.currentFloorId
       record.light.intensity = active ? 7.5 : 1.45
       record.carpet.material.opacity = active ? 0.54 : 0.11
-      record.content.visible = active || innerWidth >= 760
+      record.content.visible = active
       record.group.traverse(object => {
         if (object.isSprite) object.visible = active || object.position.z < -8
       })
