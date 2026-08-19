@@ -1,0 +1,44 @@
+name: Hide inactive tower floor content
+
+on:
+  push:
+    paths:
+      - '.github/workflows/hide-inactive-floor-content.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  optimize-floor-visibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show only the active floor interior
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/main.js')
+          text = path.read_text(encoding='utf-8')
+          old = 'record.content.visible = active || innerWidth >= 760'
+          new = 'record.content.visible = active'
+
+          if old in text:
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          elif new not in text:
+              raise SystemExit('Floor visibility source fragment was not found')
+          PY
+      - name: Commit optimization
+        shell: bash
+        run: |
+          git config user.name "RecruitFlow Performance Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/main.js
+          if git diff --cached --quiet; then
+            echo "Inactive floors are already optimized"
+          else
+            git commit -m "Render only the active tower floor interior"
+            git push
+          fi
