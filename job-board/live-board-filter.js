@@ -36,6 +36,7 @@
 
   function loadOperations() {
     addStyle('operations-suite', 'operations-suite.css?v=1');
+    addStyle('operations-tweaks', 'operations-tweaks.css?v=1');
     if (document.querySelector('script[data-operations-suite]')) return;
     const script = document.createElement('script');
     script.src = 'operations-suite.js?v=1'; script.dataset.operationsSuite = '1';
