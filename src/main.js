@@ -14,23 +14,23 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping
 renderer.toneMappingExposure = 1.08
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0xdfe8f4)
-scene.fog = new THREE.Fog(0xdfe8f4,36,72)
+scene.background = new THREE.Color(0xe6edf5)
+scene.fog = new THREE.Fog(0xe6edf5,42,82)
 const pmrem = new THREE.PMREMGenerator(renderer)
 scene.environment = pmrem.fromScene(new RoomEnvironment(),0.05).texture
 
-const camera = new THREE.PerspectiveCamera(44,innerWidth/innerHeight,0.1,220)
-camera.position.set(0,20,29)
+const camera = new THREE.PerspectiveCamera(46,innerWidth/innerHeight,0.1,220)
+camera.position.set(0,23,34)
 const controls = new OrbitControls(camera,renderer.domElement)
 controls.enableDamping = true
 controls.dampingFactor = 0.06
-controls.minDistance = 10
-controls.maxDistance = 58
+controls.minDistance = 9
+controls.maxDistance = 62
 controls.maxPolarAngle = Math.PI*0.47
 controls.target.set(0,1,0)
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x69788d,2.05))
-const sun = new THREE.DirectionalLight(0xffffff,2.7)
+scene.add(new THREE.HemisphereLight(0xffffff,0x69788d,2.15))
+const sun = new THREE.DirectionalLight(0xffffff,2.8)
 sun.position.set(12,24,10)
 sun.castShadow = true
 sun.shadow.mapSize.set(2048,2048)
@@ -45,14 +45,14 @@ function box(w,h,d,color,o={}){
 }
 
 function label(text,color,small=true){
-  const c=document.createElement('canvas'); c.width=720; c.height=small?140:210
+  const c=document.createElement('canvas'); c.width=720; c.height=small?132:210
   const x=c.getContext('2d'); x.clearRect(0,0,c.width,c.height)
-  x.fillStyle=small?'rgba(6,10,18,.80)':'rgba(8,13,22,.90)'; x.roundRect(16,16,c.width-32,c.height-32,26); x.fill()
-  x.strokeStyle=color; x.lineWidth=small?3:5; x.stroke()
-  x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#fff'; x.font=small?'800 42px Arial':'900 62px Arial'; x.fillText(text,c.width/2,c.height/2)
+  x.fillStyle=small?'rgba(6,10,18,.68)':'rgba(8,13,22,.90)'; x.roundRect(16,16,c.width-32,c.height-32,22); x.fill()
+  x.strokeStyle=color; x.lineWidth=small?2:5; x.stroke()
+  x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#fff'; x.font=small?'700 36px Arial':'900 62px Arial'; x.fillText(text,c.width/2,c.height/2)
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}))
-  s.scale.set(small?1.55:3.2,small?0.30:0.82,1)
+  s.scale.set(small?1.18:3.2,small?0.22:0.82,1)
   return s
 }
 
@@ -74,7 +74,7 @@ function desk(category,name){
   const mon=box(.54,.34,.04,0x101722,{roughness:.16,metalness:.18}); mon.position.set(0,1.03,-.20); mon.material.emissive=new THREE.Color(category.color); mon.material.emissiveIntensity=.45; g.add(mon)
   const chair=box(.36,.42,.36,0x354a68,{roughness:.78}); chair.position.set(0,.48,.50); g.add(chair)
   const p=person(category.color); p.position.set(0,0,.35); g.add(p)
-  const tag=label(name,category.color,true); tag.position.set(0,1.70,.38); g.add(tag)
+  const tag=label(name,category.color,true); tag.position.set(0,1.48,.38); g.add(tag)
   return g
 }
 
@@ -82,7 +82,7 @@ const floor=box(34,.18,30,0xf1f4f8,{roughness:.96,castShadow:false}); floor.posi
 const aisle=box(4.2,.02,29,0x29405f,{roughness:1,castShadow:false}); aisle.position.y=.011; scene.add(aisle)
 const back=box(34,6,.22,0xd9e4ef,{roughness:.94}); back.position.set(0,3,-15); scene.add(back)
 for(const x of [-17,17]){const glass=box(.16,5.8,29,0xa9c9ef,{transparent:true,opacity:.24,roughness:.08,metalness:.18}); glass.position.set(x,2.9,0); scene.add(glass)}
-for(let x=-12;x<=12;x+=6){for(let z=-11;z<=11;z+=7){const panel=box(3.4,.05,1.1,0xffffff,{roughness:.12,castShadow:false}); panel.position.set(x,5.7,z); scene.add(panel); const l=new THREE.PointLight(0xffffff,.6,9,2); l.position.set(x,5.2,z); scene.add(l)}}
+for(let x=-12;x<=12;x+=6){for(let z=-11;z<=11;z+=7){const panel=box(3.4,.05,1.1,0xffffff,{roughness:.12,castShadow:false}); panel.position.set(x,5.7,z); scene.add(panel); const l=new THREE.PointLight(0xffffff,.65,9,2); l.position.set(x,5.2,z); scene.add(l)}}
 
 const loungeFloor=box(5.4,.03,4.2,0xdbe4ee,{roughness:.98}); loungeFloor.position.set(0,.015,0); scene.add(loungeFloor)
 const loungeTable=box(1.9,.1,.9,0xb8c4d1,{metalness:.15}); loungeTable.position.set(0,.72,0); scene.add(loungeTable)
