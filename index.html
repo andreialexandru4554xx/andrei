@@ -1,1 +1,89 @@
-<!doctype html><html lang="ro"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#060910"/><title>RecruitFlow Office 3D</title><link rel="stylesheet" href="./styles.css?v=20260819-list"/><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}</script></head><body><div id="app-shell"><canvas id="world"></canvas><header class="topbar glass"><div class="brand"><span class="brand-mark">78</span><div><strong>RecruitFlow Office 3D</strong><span>Distribuție reală • 78 agenți</span></div></div><div class="status-row"><span class="status-dot"></span><span>Model activ</span><span class="divider"></span><button id="open-roster" class="ghost-btn">☰ Lista agenților</button><button id="reset-view" class="ghost-btn">Vedere generală</button></div></header><aside class="sidebar glass"><div class="eyebrow">78 AGENȚI • STRUCTURĂ ACTUALĂ</div><h1>Allocation Control</h1><p class="muted">Yellow 25 • Blue 23 • RED 3 • Posting 15 • Classic 12.</p><div class="kpi-grid" id="global-kpis"></div><div class="section-heading"><span>Echipe</span><span class="muted small">click pentru focus</span></div><div id="zone-list" class="zone-list"></div></aside><section class="detail-panel glass" id="detail-panel"><button id="close-detail" class="icon-btn">×</button><div class="eyebrow" id="detail-eyebrow">ECHIPĂ</div><h2 id="detail-title">Selectează o echipă</h2><p id="detail-description" class="muted"></p><div class="detail-kpis" id="detail-kpis"></div><div class="detail-note" id="detail-note"></div></section><section id="roster-panel" class="roster-panel glass"><div class="roster-head"><div><div class="eyebrow">LISTĂ COMPLETĂ</div><h2>Toți cei 78 de agenți</h2></div><button id="close-roster" class="icon-btn roster-close">×</button></div><div id="roster-content" class="roster-content"></div></section><div id="roster-backdrop" class="roster-backdrop"></div><div class="help glass"><span><b>Rotire</b> drag</span><span><b>Zoom</b> wheel</span><span><b>Listă</b> buton sus</span></div></div><script type="module" src="./src/main.js?v=20260819-list"></script></body></html>
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#060910" />
+  <title>RecruitFlow Business Campus 3D</title>
+  <link rel="stylesheet" href="./styles.css?v=20260819-campus" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app-shell">
+    <canvas id="world"></canvas>
+
+    <header class="topbar glass">
+      <div class="brand">
+        <span class="brand-mark">78</span>
+        <div>
+          <strong>RecruitFlow Business Campus 3D</strong>
+          <span>Teams • Roles • Calls Center</span>
+        </div>
+      </div>
+
+      <nav class="building-nav" aria-label="Clădiri">
+        <button class="building-btn active" data-building="teams">🏢 Teams</button>
+        <button class="building-btn" data-building="roles">🧭 Roles</button>
+        <button class="building-btn" data-building="calls">📞 Calls</button>
+      </nav>
+
+      <div class="status-row">
+        <span class="status-dot"></span>
+        <span>3 clădiri active</span>
+        <span class="divider"></span>
+        <button id="open-roster" class="ghost-btn">☰ Lista agenților</button>
+        <button id="reset-view" class="ghost-btn">Vedere clădire</button>
+      </div>
+    </header>
+
+    <aside class="sidebar glass">
+      <div class="eyebrow" id="sidebar-eyebrow">TEAMS BUILDING</div>
+      <h1 id="sidebar-title">Open Office</h1>
+      <p class="muted" id="sidebar-copy">Toți cei 78 de agenți, grupați pe echipe, cu numele vizibil deasupra.</p>
+      <div class="kpi-grid" id="global-kpis"></div>
+      <div class="section-heading">
+        <span id="section-label">Echipe</span>
+        <span class="muted small">click pentru focus</span>
+      </div>
+      <div id="zone-list" class="zone-list"></div>
+    </aside>
+
+    <section class="detail-panel glass" id="detail-panel">
+      <button id="close-detail" class="icon-btn">×</button>
+      <div class="eyebrow" id="detail-eyebrow">SELECTEAZĂ O ZONĂ</div>
+      <h2 id="detail-title">Business Campus</h2>
+      <p id="detail-description" class="muted">Navighează între cele trei clădiri folosind butoanele de sus.</p>
+      <div class="detail-kpis" id="detail-kpis"></div>
+      <div class="detail-note" id="detail-note"></div>
+    </section>
+
+    <section id="roster-panel" class="roster-panel glass">
+      <div class="roster-head">
+        <div>
+          <div class="eyebrow">LISTĂ COMPLETĂ</div>
+          <h2>Toți cei 78 de agenți</h2>
+        </div>
+        <button id="close-roster" class="icon-btn roster-close">×</button>
+      </div>
+      <div id="roster-content" class="roster-content"></div>
+    </section>
+
+    <div id="roster-backdrop" class="roster-backdrop"></div>
+
+    <div class="help glass">
+      <span><b>Clădiri</b> butoanele de sus</span>
+      <span><b>Rotire</b> drag</span>
+      <span><b>Zoom</b> wheel</span>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js?v=20260819-campus"></script>
+</body>
+</html>
