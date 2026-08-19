@@ -30,13 +30,13 @@ export const secondiCategories = [
     id: 'red', name: 'RED', count: 3, color: '#ff4d68', accent: '#ffadba',
     angle: 242, description: 'Echipă mică și concentrată pentru aplicația RED.',
     priority: 'Focused', action: 'Fast worker search',
-    people: ['Andrei Red', 'Maxim', 'Miriam'],
+    people: ['Andrei Red', 'Miriam', 'RED 03'],
   },
   {
     id: 'iza', name: 'IZA', count: 1, color: '#a56cff', accent: '#dcc5ff',
     angle: 292, description: 'Un second dedicat aplicației IZA.',
     priority: 'Dedicated', action: 'IZA operations',
-    people: buildNames('IZA', 1),
+    people: ['Maxim'],
   },
   {
     id: 'reserve', name: 'Rezervă', count: 15, color: '#aab4c6', accent: '#eef2f8',
