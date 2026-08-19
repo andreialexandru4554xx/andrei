@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#080b12" />
-  <title>Andrei Business World 3D</title>
+  <meta name="theme-color" content="#060910" />
+  <title>Secondi Allocation HQ 3D</title>
   <link rel="stylesheet" href="./styles.css" />
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}
@@ -15,32 +15,36 @@
     <canvas id="world"></canvas>
 
     <header class="topbar glass">
-      <div class="brand"><span class="brand-mark">AB</span><div><strong>Andrei Business World</strong><span>3D Business Operating System</span></div></div>
-      <div class="status-row"><span class="status-dot"></span><span id="data-status">Demo data</span><span class="divider"></span><button id="reset-view" class="ghost-btn">HQ overview</button></div>
+      <div class="brand">
+        <span class="brand-mark">84</span>
+        <div><strong>Secondi Allocation HQ</strong><span>Distribuție vizuală 3D • operațiuni</span></div>
+      </div>
+      <div class="status-row"><span class="status-dot"></span><span>Model activ</span><span class="divider"></span><button id="reset-view" class="ghost-btn">Vedere generală</button></div>
     </header>
 
     <aside class="sidebar glass">
-      <div class="eyebrow">EXECUTIVE OVERVIEW</div>
-      <h1>Company Control</h1>
-      <p class="muted">Navighează vizual prin operațiunile companiei. Selectează un departament din clădire.</p>
+      <div class="eyebrow">84 SECONDI • STRUCTURĂ FINALĂ</div>
+      <h1>Allocation Control</h1>
+      <p class="muted">Fiecare punct luminos din HQ reprezintă un om. Mărimea turnului și grupul 3D arată instant cât de mare este fiecare echipă.</p>
       <div class="kpi-grid" id="global-kpis"></div>
-      <div class="section-heading"><span>Departments</span><span class="muted small">click to focus</span></div>
+      <div class="allocation-strip"><span style="width:82%"></span></div>
+      <div class="allocation-caption"><span>69 alocați</span><span>15 rezervă</span></div>
+      <div class="section-heading"><span>Categorii</span><span class="muted small">click pentru focus</span></div>
       <div id="zone-list" class="zone-list"></div>
-      <div class="section-heading systems-heading"><span>Data systems</span></div>
-      <div id="systems-list" class="systems-list"></div>
     </aside>
 
     <section class="detail-panel glass" id="detail-panel">
       <button id="close-detail" class="icon-btn" aria-label="Închide">×</button>
-      <div class="eyebrow" id="detail-eyebrow">DEPARTMENT</div>
-      <h2 id="detail-title">Select a zone</h2>
-      <p id="detail-description" class="muted">Click Blue, Yellow, Red sau Control Room.</p>
+      <div class="eyebrow" id="detail-eyebrow">CATEGORIE</div>
+      <h2 id="detail-title">Selectează o zonă</h2>
+      <p id="detail-description" class="muted">Apasă pe un turn sau pe o categorie din stânga.</p>
       <div class="detail-kpis" id="detail-kpis"></div>
-      <div class="activity-block"><div class="section-heading"><span>Recent activity</span></div><div id="activity-list" class="activity-list"></div></div>
+      <div class="visual-bar"><span id="detail-bar"></span></div>
+      <div class="detail-note" id="detail-note"></div>
     </section>
 
-    <div class="building-label glass"><span class="pulse"></span><strong>HQ LIVE MODEL</strong><span>V2</span></div>
-    <div class="help glass"><span><b>Rotate</b> drag</span><span><b>Zoom</b> wheel</span><span><b>Select</b> click office</span></div>
+    <div class="center-badge glass"><span class="pulse"></span><strong>84 SECONDI</strong><span>LIVE ALLOCATION</span></div>
+    <div class="help glass"><span><b>Rotire</b> drag</span><span><b>Zoom</b> wheel</span><span><b>Focus</b> click zonă</span></div>
   </div>
   <script type="module" src="./src/main.js"></script>
 </body>
