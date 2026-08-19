@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { realOffices, knownSecondNames, officeRosterCount } from './office-data.js'
+import { realOffices, officeRosterCount, roleTotals } from './office-data.js'
 
 const canvas = document.querySelector('#office-world')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
@@ -40,32 +40,42 @@ function box(w,h,d,color,opts={}){
 }
 
 function label(text,color='#8fb8ff',small=false){
-  const c=document.createElement('canvas'); c.width=700; c.height=small?150:220
+  const c=document.createElement('canvas'); c.width=760; c.height=small?150:220
   const x=c.getContext('2d'); x.clearRect(0,0,c.width,c.height)
   x.fillStyle='rgba(7,12,20,.9)'; x.roundRect(14,14,c.width-28,c.height-28,26); x.fill()
   x.strokeStyle=color; x.lineWidth=small?3:5; x.stroke()
-  x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#fff'; x.font=small?'800 38px Arial':'900 52px Arial'; x.fillText(text,c.width/2,c.height/2)
+  x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#fff'; x.font=small?'800 36px Arial':'900 50px Arial'; x.fillText(text,c.width/2,c.height/2)
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace
-  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false})); s.scale.set(small?1.5:3.1,small?.34:.86,1); return s
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false})); s.scale.set(small?1.65:3.3,small?.34:.86,1); return s
 }
 
-function roleFor(name){ return knownSecondNames.has(name) ? 'SECOND' : 'DE STABILIT' }
-function roleColor(role){ return role==='SECOND' ? '#44a0ff' : '#9ba6b6' }
+function roleColor(role){
+  if(role==='FIRST') return '#ffb13c'
+  if(role==='SECOND') return '#44a0ff'
+  if(role==='FIRST + SECOND') return '#a66cff'
+  return '#9ba6b6'
+}
+function roleHex(role){
+  if(role==='FIRST') return 0xffb13c
+  if(role==='SECOND') return 0x44a0ff
+  if(role==='FIRST + SECOND') return 0xa66cff
+  return 0x65758a
+}
 
 function person(role){
-  const g=new THREE.Group(); const color=role==='SECOND'?0x44a0ff:0x65758a
+  const g=new THREE.Group(); const color=roleHex(role)
   const body=new THREE.Mesh(new THREE.CapsuleGeometry(.15,.4,5,10),new THREE.MeshStandardMaterial({color,roughness:.68})); body.position.y=.56; g.add(body)
   const head=new THREE.Mesh(new THREE.SphereGeometry(.165,16,12),new THREE.MeshStandardMaterial({color:0xd4a17b,roughness:.9})); head.position.y=.94; g.add(head)
   return g
 }
 
-function station(name){
-  const role=roleFor(name); const color=roleColor(role); const g=new THREE.Group()
+function station(personRecord){
+  const {name,role}=personRecord; const color=roleColor(role); const g=new THREE.Group()
   const desk=box(1.18,.08,.66,0xe8eef6,{roughness:.84}); desk.position.y=.7; g.add(desk)
-  const screen=box(.45,.28,.04,role==='SECOND'?0x44a0ff:0x66758a,{roughness:.2}); screen.position.set(0,.98,-.16); screen.material.emissive=new THREE.Color(role==='SECOND'?0x44a0ff:0x263342); screen.material.emissiveIntensity=.32; g.add(screen)
+  const screen=box(.45,.28,.04,roleHex(role),{roughness:.2}); screen.position.set(0,.98,-.16); screen.material.emissive=new THREE.Color(roleHex(role)); screen.material.emissiveIntensity=.32; g.add(screen)
   const p=person(role); p.position.set(0,0,.34); g.add(p)
-  const n=label(name,color,true); n.position.set(0,1.56,.28); g.add(n)
-  const b=label(role,color,true); b.scale.set(role==='SECOND'?.78:1.02,.18,1); b.position.set(0,1.31,.28); g.add(b)
+  const n=label(name,color,true); n.position.set(0,1.58,.28); g.add(n)
+  const b=label(role==='UNKNOWN'?'NECLAR':role,color,true); b.scale.set(role==='FIRST + SECOND'?1.18:.86,.18,1); b.position.set(0,1.31,.28); g.add(b)
   return g
 }
 
@@ -86,15 +96,19 @@ realOffices.forEach((office,index)=>{
   const color=palette[index%palette.length]
   const g=new THREE.Group(); g.position.set(x,0,z)
   const slab=box(cellW-1,.05,cellD-1,color,{roughness:.88,transparent:true,opacity:.22}); slab.position.y=.03; g.add(slab)
+  const firstCount=office.people.filter(p=>p.role==='FIRST').length
+  const secondCount=office.people.filter(p=>p.role==='SECOND').length
+  const bothCount=office.people.filter(p=>p.role==='FIRST + SECOND').length
   const sign=label(`${office.name} • ${office.people.length}`,color,false); sign.position.set(0,3.6,-cellD/2+.75); g.add(sign)
+  const roleSummary=label(`F ${firstCount} • S ${secondCount} • F+S ${bothCount}`,'#d7e5ff',true); roleSummary.position.set(0,3.05,-cellD/2+.75); roleSummary.scale.set(2.2,.28,1); g.add(roleSummary)
 
   const pcols=Math.min(4,Math.max(1,office.people.length))
   const prows=Math.ceil(office.people.length/pcols)
-  office.people.forEach((name,i)=>{
+  office.people.forEach((personRecord,i)=>{
     const c=i%pcols, r=Math.floor(i/pcols)
     const sx=(c-(pcols-1)/2)*2.25
     const sz=(r-(prows-1)/2)*1.9+.4
-    const s=station(name); s.position.set(sx,.08,sz); g.add(s)
+    const s=station(personRecord); s.position.set(sx,.08,sz); g.add(s)
   })
 
   const hit=new THREE.Mesh(new THREE.BoxGeometry(cellW-1,3.8,cellD-1),new THREE.MeshBasicMaterial({visible:false}))
@@ -105,17 +119,23 @@ realOffices.forEach((office,index)=>{
 
 const raycaster=new THREE.Raycaster(), pointer=new THREE.Vector2(); let target=null
 
+function badgeClass(role){
+  if(role==='FIRST') return 'first'
+  if(role==='SECOND') return 'second'
+  if(role==='FIRST + SECOND') return 'both'
+  return 'unknown'
+}
+
 function selectOffice(index,focus=true){
   const rec=officeMap.get(index); if(!rec)return
   const {office,x,z}=rec
   document.querySelector('#panel-eyebrow').textContent='OFFICE REAL'
   document.querySelector('#panel-title').textContent=office.name
-  const secondCount=office.people.filter(name=>roleFor(name)==='SECOND').length
-  document.querySelector('#panel-copy').textContent=`${office.people.length} persoane • ${secondCount} SECOND cunoscuți • restul rol de stabilit.`
-  document.querySelector('#people-list').innerHTML=office.people.map(name=>{
-    const role=roleFor(name)
-    return `<div class="person-row"><strong>${name}</strong><span class="role-badge ${role==='SECOND'?'second':'unknown'}">${role}</span></div>`
-  }).join('')
+  const firstCount=office.people.filter(p=>p.role==='FIRST').length
+  const secondCount=office.people.filter(p=>p.role==='SECOND').length
+  const bothCount=office.people.filter(p=>p.role==='FIRST + SECOND').length
+  document.querySelector('#panel-copy').textContent=`${office.people.length} persoane • FIRST ${firstCount} • SECOND ${secondCount} • FIRST+SECOND ${bothCount}`
+  document.querySelector('#people-list').innerHTML=office.people.map(p=>`<div class="person-row"><strong>${p.name}</strong><span class="role-badge ${badgeClass(p.role)}">${p.role==='UNKNOWN'?'NECLAR':p.role}</span></div>`).join('')
   officeMap.forEach((item,key)=>item.light.intensity=key===index?5.8:1.4)
   if(focus) target={pos:new THREE.Vector3(x+7,6.5,z+8),look:new THREE.Vector3(x,1,z)}
 }
@@ -126,7 +146,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{
 })
 
 document.querySelector('#overview').addEventListener('click',()=>{target={pos:new THREE.Vector3(35,30,42),look:new THREE.Vector3(0,1,0)}})
-const title=document.querySelector('.top-title'); if(title) title.textContent=`Office Room • ${realOffices.length} office-uri • ${officeRosterCount} persoane`
+const title=document.querySelector('.top-title'); if(title) title.textContent=`Office Room • ${realOffices.length} office-uri • ${officeRosterCount} persoane • F ${roleTotals['FIRST']||0} • S ${roleTotals['SECOND']||0} • F+S ${roleTotals['FIRST + SECOND']||0}`
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)})
 
 function animate(){requestAnimationFrame(animate);if(target){camera.position.lerp(target.pos,.07);controls.target.lerp(target.look,.07);if(camera.position.distanceTo(target.pos)<.06)target=null}controls.update();renderer.render(scene,camera)}
