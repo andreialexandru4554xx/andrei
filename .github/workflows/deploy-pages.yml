@@ -1,4 +1,4 @@
-name: Deploy Andrei Business World 3D
+name: Deploy RecruitFlow Business Tower and apps
 
 on:
   push:
@@ -34,16 +34,24 @@ jobs:
           rm -rf _site
           mkdir -p _site
           git archive --format=tar HEAD | tar -x -C _site
-          mkdir -p _site/seconds-agents
-          cat .deploy/seconds-agents.b64.* | base64 --decode > /tmp/seconds-agents.zip
-          unzip -q -o /tmp/seconds-agents.zip -d _site/seconds-agents
+
+          # Preserve the separate Seconds Agents application when its package exists.
+          if compgen -G ".deploy/seconds-agents.b64.*" > /dev/null; then
+            mkdir -p _site/seconds-agents
+            cat .deploy/seconds-agents.b64.* | base64 --decode > /tmp/seconds-agents.zip
+            unzip -q -o /tmp/seconds-agents.zip -d _site/seconds-agents
+          fi
+
           rm -rf _site/.git _site/.github _site/.deploy
           rm -f _site/seconds-agents-package.zip
-          test -s _site/seconds-agents/index.html
-          test -s _site/seconds-agents/app.js
-          test -s _site/seconds-agents/manifest.webmanifest
-          grep -q "Seconds Agents" _site/seconds-agents/index.html
-          grep -q "seconds-agents:data:v1" _site/seconds-agents/app.js
+
+          test -s _site/index.html
+          test -s _site/styles.css
+          test -s _site/src/main.js
+          test -s _site/src/data.js
+          grep -q "RecruitFlow Business Tower" _site/index.html
+          grep -q "class BusinessTower3D" _site/src/main.js
+          grep -q "businessFloors" _site/src/data.js
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
@@ -54,29 +62,41 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify public application
+      - name: Verify public Business Tower
+        shell: bash
+        env:
+          ROOT_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..24}; do
+            index="$(curl -fsSL --max-time 20 "$ROOT_URL" || true)"
+            main="$(curl -fsSL --max-time 20 "${ROOT_URL}src/main.js" || true)"
+            data="$(curl -fsSL --max-time 20 "${ROOT_URL}src/data.js" || true)"
+            if grep -q "RecruitFlow Business Tower" <<<"$index" \
+              && grep -q "class BusinessTower3D" <<<"$main" \
+              && grep -q "businessFloors" <<<"$data"; then
+              echo "Business Tower is live and verified at $ROOT_URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Public verification failed for $ROOT_URL" >&2
+          exit 1
+
+      - name: Verify optional Seconds Agents app
+        if: ${{ hashFiles('.deploy/seconds-agents.b64.*') != '' }}
         shell: bash
         env:
           PUBLIC_URL: ${{ steps.deployment.outputs.page_url }}seconds-agents/
         run: |
           set -euo pipefail
-          for attempt in {1..24}; do
-            index="$(curl -fsSL --max-time 20 "$PUBLIC_URL" || true)"
-            app="$(curl -fsSL --max-time 20 "${PUBLIC_URL}app.js" || true)"
-            manifest="$(curl -fsSL --max-time 20 "${PUBLIC_URL}manifest.webmanifest" || true)"
-            if grep -q "Seconds Agents" <<<"$index" \
-              && grep -q "seconds-agents:data:v1" <<<"$app" \
-              && grep -q "Seconds Agents" <<<"$manifest"; then
-              echo "Seconds Agents is live and verified at $PUBLIC_URL"
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "Public verification failed for $PUBLIC_URL" >&2
-          exit 1
+          index="$(curl -fsSL --max-time 20 "$PUBLIC_URL" || true)"
+          app="$(curl -fsSL --max-time 20 "${PUBLIC_URL}app.js" || true)"
+          grep -q "Seconds Agents" <<<"$index"
+          grep -q "seconds-agents:data:v1" <<<"$app"
 
       - name: Mark verified deployment
         shell: bash
         run: |
           set -euo pipefail
-          git push --force origin "HEAD:refs/heads/seconds-agents-live"
+          git push --force origin "HEAD:refs/heads/business-tower-live"
