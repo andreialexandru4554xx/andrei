@@ -1,3 +1,4 @@
+// Open-office roster configuration
 const buildNames = (prefix, count) => Array.from({ length: count }, (_, i) => `${prefix} ${String(i + 1).padStart(2, '0')}`)
 
 export const secondiCategories = [
