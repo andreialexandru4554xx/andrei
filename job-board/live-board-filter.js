@@ -34,22 +34,28 @@
     document.head.append(link);
   }
 
-  function loadPresence() {
-    addStyle('presence', 'presence.css?v=1');
-    if (document.querySelector('script[data-presence]')) return;
-    const script = document.createElement('script');
-    script.src = 'presence.js?v=1'; script.dataset.presence = '1';
-    document.body.append(script);
+  function removeDeprecatedUi() {
+    document.querySelectorAll('.suite-history-tab,.suite-attention-tab,.suite-command-center,.suite-activity').forEach((node) => node.remove());
+    const history = document.querySelector('#suiteHistoryDashboard');
+    if (history) history.remove();
+    const attention = document.querySelector('#suiteAttentionDashboard');
+    if (attention) attention.remove();
+    if (localStorage.getItem('rf_job_board_suite_view') === 'history' || localStorage.getItem('rf_job_board_suite_view') === 'attention') {
+      localStorage.removeItem('rf_job_board_suite_view');
+    }
   }
 
   function loadOperations() {
-    addStyle('operations-suite', 'operations-suite.css?v=1');
-    addStyle('operations-tweaks', 'operations-tweaks.css?v=1');
-    if (document.querySelector('script[data-operations-suite]')) { loadPresence(); return; }
+    addStyle('operations-suite', 'operations-suite.css?v=2');
+    addStyle('operations-tweaks', 'operations-tweaks.css?v=2');
+    const existing = document.querySelector('script[data-operations-suite]');
+    if (existing) { removeDeprecatedUi(); return; }
     const script = document.createElement('script');
-    script.src = 'operations-suite.js?v=1'; script.dataset.operationsSuite = '1';
-    script.addEventListener('load', loadPresence, { once: true });
-    script.addEventListener('error', loadPresence, { once: true });
+    script.src = 'operations-suite.js?v=2'; script.dataset.operationsSuite = '1';
+    script.addEventListener('load', () => {
+      removeDeprecatedUi();
+      window.setTimeout(removeDeprecatedUi, 250);
+    }, { once: true });
     document.body.append(script);
   }
 
