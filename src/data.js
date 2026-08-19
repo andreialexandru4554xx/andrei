@@ -18,7 +18,7 @@ export const secondiCategories = [
     id: 'posts', name: 'Postări', count: 15, color: '#ff8a34', accent: '#ffd0ad',
     angle: 132, description: 'Secondi dedicați postărilor, distribuției și generării de leaduri.',
     priority: 'Growth', action: 'Posting & lead generation',
-    people: buildNames('Postări', 15),
+    people: ['Lorena', ...buildNames('Postări', 14, 2)],
   },
   {
     id: 'classic', name: 'Clasic', count: 10, color: '#27d4b5', accent: '#a8f4e6',
@@ -30,13 +30,13 @@ export const secondiCategories = [
     id: 'red', name: 'RED', count: 3, color: '#ff4d68', accent: '#ffadba',
     angle: 242, description: 'Echipă mică și concentrată pentru aplicația RED.',
     priority: 'Focused', action: 'Fast worker search',
-    people: ['Andrei Red', 'Miriam', 'RED 03'],
+    people: ['Andrei Red', 'Maxim', 'Miriam'],
   },
   {
     id: 'iza', name: 'IZA', count: 1, color: '#a56cff', accent: '#dcc5ff',
     angle: 292, description: 'Un second dedicat aplicației IZA.',
     priority: 'Dedicated', action: 'IZA operations',
-    people: ['Maxim'],
+    people: buildNames('IZA', 1),
   },
   {
     id: 'reserve', name: 'Rezervă', count: 15, color: '#aab4c6', accent: '#eef2f8',
