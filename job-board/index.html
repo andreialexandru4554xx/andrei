@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="RecruitFlow Job Board — postează, revendică și închide rapid joburile de recrutare.">
   <title>RecruitFlow — Job Board</title>
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <header class="topbar">
@@ -88,24 +88,22 @@
 
   <footer>
     <strong>RecruitFlow Job Board</strong>
-    <span>Date protejate · Actualizare automată · Mobile friendly</span>
+    <span>Acces fără cod · Actualizare automată · Mobile friendly</span>
   </footer>
 
   <dialog id="accessDialog" class="access-dialog">
     <form id="accessForm" class="dialog-form access-form">
       <div class="access-logo">RF</div>
-      <span class="eyebrow dark">ACCES ECHIPĂ</span>
-      <h2>Intră în Job Board</h2>
-      <p>Site-ul este public pe internet, dar joburile și acțiunile sunt protejate pentru echipă.</p>
+      <span class="eyebrow dark">IDENTIFICARE AGENT</span>
+      <h2>Spune-ne cine ești</h2>
+      <p>Introdu doar numele tău, ca să se vadă cine postează și cine revendică fiecare job.</p>
       <label>Numele tău / numele secondului
         <input id="accessAgent" name="agent" type="text" maxlength="80" autocomplete="name" placeholder="Ex: Andrei" required>
       </label>
-      <label>Codul echipei
-        <input id="accessCode" name="code" type="password" inputmode="numeric" maxlength="20" autocomplete="current-password" placeholder="••••••" required>
-      </label>
+      <input id="accessCode" name="code" type="hidden" value="public">
       <p id="accessError" class="form-error" role="alert" hidden></p>
-      <button class="primary wide" type="submit"><span>Intră în aplicație</span><span>→</span></button>
-      <small>Pe un telefon comun, apasă pe numele agentului când termini pentru a schimba utilizatorul.</small>
+      <button class="primary wide" type="submit"><span>Continuă</span><span>→</span></button>
+      <small>Nu este necesar niciun cod. Pe un telefon comun, apasă pe numele agentului pentru a schimba utilizatorul.</small>
     </form>
   </dialog>
 
@@ -229,6 +227,14 @@
   <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
   <div id="loadingOverlay" class="loading-overlay" hidden><span class="spinner"></span><strong>Se salvează…</strong></div>
 
-  <script src="app.js?v=2"></script>
+  <script>
+    document.addEventListener('submit', function (event) {
+      if (event.target && event.target.id === 'accessForm') {
+        var field = document.getElementById('accessCode');
+        if (field) field.value = 'public';
+      }
+    }, true);
+  </script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
