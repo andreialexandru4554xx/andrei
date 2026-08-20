@@ -12,47 +12,63 @@ const realCases = [
 
 const $ = s => document.querySelector(s);
 const esc = (v='') => String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-function badge(status){if(status==='strong')return '<span class="role-badge primary-role">STRONG MATCH</span>';if(status==='followup')return '<span class="role-badge alt-role">FOLLOW-UP</span>';return '<span class="role-badge blocked-role">BLOCKED</span>'}
+function badge(status){if(status==='strong')return '<span class="role-badge primary-role">STRONG</span>';if(status==='followup')return '<span class="role-badge alt-role">FOLLOW-UP</span>';return '<span class="role-badge blocked-role">BLOCKED</span>'}
 function scoreClass(s){return s>=90?'score-strong':s>=75?'score-good':s>=50?'score-review':'score-low'}
 function callRate(summary=''){
   const text=String(summary);
   const pound=text.match(/£\s?\d+(?:\.\d+)?(?:\s*[-–]\s*£?\d+(?:\.\d+)?)?\s*(?:\/h|\/hour|per hour|ph|pph)?/i);
   if(pound) return pound[0].replace(/\s+/g,' ');
   const plain=text.match(/\b(\d{2}(?:\.\d+)?)\s*(?:\/h|\/hour|per hour|pe oră|pe ora|ph|pph)\b/i);
-  return plain ? `£${plain[1]}/h` : 'Not confirmed';
+  return plain ? `£${plain[1]}/h` : '—';
 }
-function renderStats(rows){const strong=rows.filter(x=>x.status==='strong').length,follow=rows.filter(x=>x.status==='followup').length,blocked=rows.filter(x=>x.status==='blocked').length;$('#stats').innerHTML=[[rows.length,'Current matches'],[strong,'Strong'],[follow,'Follow-up'],[blocked,'Blocked'],['08:21 UK','Latest AI call']].map(([n,l])=>`<div class="stat"><div class="num">${esc(n)}</div><div class="label">${esc(l)}</div></div>`).join('')}
-function tile(label,value,cls=''){return `<div class="scan-tile ${cls}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`}
+function acceptedRate(x){
+  const s=String(x.summary||'').toLowerCase();
+  const discussed=callRate(x.summary);
+  if(discussed==='—') return '—';
+  if(/agreed|accepted|acceptat|a acceptat|confirmed the rate|rate agreed/.test(s)) return discussed;
+  return 'Not confirmed';
+}
+function renderStats(rows){const strong=rows.filter(x=>x.status==='strong').length,follow=rows.filter(x=>x.status==='followup').length;$('#stats').innerHTML=[[rows.length,'Matches'],[strong,'Strong'],[follow,'Follow-up'],['30 sec','Live refresh'],['08:21 UK','Latest AI call']].map(([n,l])=>`<div class="stat"><div class="num">${esc(n)}</div><div class="label">${esc(l)}</div></div>`).join('')}
+function mini(label,value,cls=''){return `<div class="mini-field ${cls}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`}
 function render(){
   const q=$('#searchInput').value.trim().toLowerCase();
   const status=$('#statusFilter').value;
   const rows=realCases.filter(x=>{const blob=[x.worker,x.workerTrade,x.jobTrade,x.workerPostcode,x.second,x.first,x.job,x.jobPostcode,x.rate,x.summary,x.status].join(' ').toLowerCase();return(!q||blob.includes(q))&&(status==='all'||x.status===status)});
-  $('#caseCount').textContent=rows.length;
-  renderStats(rows);
-  $('#caseList').innerHTML=rows.map(x=>`<article class="top10-card match-${x.status}">
-    <div class="compact-head">
-      <div class="head-left"><span class="match-index">#${x.id}</span><div><div class="worker-name">${esc(x.worker)}</div><div class="worker-sub">${esc(x.workerTrade)} · ${esc(x.workerPostcode)}</div></div></div>
-      <div class="head-right">${badge(x.status)}<div class="score ${scoreClass(x.confidence)}">${x.confidence}<small>%</small></div></div>
+  $('#caseCount').textContent=rows.length; renderStats(rows);
+  $('#caseList').innerHTML=rows.map(x=>`<article class="match-card ${x.status}">
+    <div class="match-topbar">
+      <div class="match-id">#${x.id}</div>
+      <div class="match-title">${esc(x.workerTrade)} <span>↔</span> ${esc(x.jobTrade)}</div>
+      <div class="match-meta">${badge(x.status)}<div class="score ${scoreClass(x.confidence)}">${x.confidence}%</div></div>
     </div>
 
-    <div class="scan-grid people-grid">
-      ${tile('SECOND · A SUNAT',x.second,'second-tile')}
-      ${tile('ORA APELULUI',x.callTime)}
-      ${tile('OUTCOME',x.callOutcome)}
-      ${tile('FIRST · A POSTAT',x.first,'first-tile')}
+    <div class="compare-grid">
+      <section class="side blue-side">
+        <div class="side-title">BLUE CALL</div>
+        ${mini('MUNCITOR',x.worker,'hero-mini')}
+        ${mini('MESERIE',x.workerTrade)}
+        ${mini('POSTCODE',x.workerPostcode)}
+        ${mini('SECOND',x.second,'second-mini')}
+        ${mini('ORA',x.callTime)}
+        ${mini('OUTCOME',x.callOutcome)}
+      </section>
+      <div class="match-arrow">MATCH</div>
+      <section class="side job-side">
+        <div class="side-title">JOB DASHBOARD</div>
+        ${mini('JOB',x.job,'hero-mini')}
+        ${mini('MESERIE',x.jobTrade)}
+        ${mini('POSTCODE',x.jobPostcode)}
+        ${mini('FIRST',x.first,'first-mini')}
+        ${mini('RATE PROPUS',x.rate,'rate-mini')}
+        ${mini('RATE ACCEPTAT',acceptedRate(x),'accepted-mini')}
+      </section>
     </div>
 
-    <div class="scan-grid job-grid">
-      ${tile('JOB',x.job,'job-tile')}
-      ${tile('MESERIE JOB',x.jobTrade)}
-      ${tile('POSTCODE JOB',x.jobPostcode)}
-      ${tile('RATE JOB',x.rate,'rate-job')}
-      ${tile('RATE DIN APEL',callRate(x.summary),'rate-call')}
-    </div>
-
-    <div class="summary-compact"><span>REZUMAT AI</span><p>${esc(x.summary)}</p></div>
-
-    <div class="reason-line">${x.why.slice(0,4).map(r=>`<span class="reason ${x.status==='strong'?'ok':'info'}">${esc(r)}</span>`).join('')}</div>
-  </article>`).join('')||'<div class="empty">No real situations match these filters.</div>'
+    <details class="summary-box">
+      <summary><span>REZUMAT AI</span><b>${esc(x.summary)}</b></summary>
+      <div class="summary-full">${esc(x.summary)}</div>
+    </details>
+    <div class="why-row">${x.why.slice(0,3).map(r=>`<span>${esc(r)}</span>`).join('')}</div>
+  </article>`).join('')||'<div class="empty">No matches.</div>'
 }
 $('#searchInput').addEventListener('input',render);$('#statusFilter').addEventListener('change',render);render();
