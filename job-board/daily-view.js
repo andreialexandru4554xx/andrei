@@ -29,15 +29,8 @@
     return `${String(parts.year).padStart(4, '0')}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
   }
 
-  function currentDayKey() {
+  function clockDayKey() {
     return keyFromParts(londonParts());
-  }
-
-  function previousDayKey() {
-    const p = londonParts();
-    const date = new Date(Date.UTC(p.year, p.month - 1, p.day, 12));
-    date.setUTCDate(date.getUTCDate() - 1);
-    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
   }
 
   function jobDayKey(job) {
@@ -53,20 +46,37 @@
       && !String(job.job_reference || '').startsWith('HOT-WORKER-');
   }
 
-  function isVisibleJob(job) {
-    return isOperational(job) && jobDayKey(job) === currentDayKey();
+  function boardDayKey(allJobs = state.jobs) {
+    const keys = (Array.isArray(allJobs) ? allJobs : [])
+      .filter(isOperational)
+      .map(jobDayKey)
+      .filter(Boolean)
+      .sort();
+    return keys.length ? keys[keys.length - 1] : clockDayKey();
   }
 
-  function isActiveYesterday(job) {
+  function previousDayKey(key) {
+    const [year, month, day] = String(key || '').split('-').map(Number);
+    if (!year || !month || !day) return '';
+    const date = new Date(Date.UTC(year, month - 1, day, 12));
+    date.setUTCDate(date.getUTCDate() - 1);
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+  }
+
+  function isMainDayJob(job, allJobs = state.jobs) {
+    return isOperational(job) && jobDayKey(job) === boardDayKey(allJobs);
+  }
+
+  function isActivePreviousDay(job, allJobs = state.jobs) {
     return isOperational(job)
-      && jobDayKey(job) === previousDayKey()
+      && jobDayKey(job) === previousDayKey(boardDayKey(allJobs))
       && ['open', 'claimed'].includes(String(job.status));
   }
 
-  function yesterdayJobs(allJobs) {
+  function previousJobs(allJobs) {
     const statusOrder = { open: 0, claimed: 1 };
     const priorityOrder = { urgent: 0, normal: 1, low: 2 };
-    return allJobs.filter(isActiveYesterday).sort((a, b) => {
+    return allJobs.filter((job) => isActivePreviousDay(job, allJobs)).sort((a, b) => {
       const priority = (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1);
       if (priority) return priority;
       const status = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
@@ -79,15 +89,15 @@
     return jobs.reduce((sum, job) => sum + Math.max(1, Number(job.workers_needed) || 1), 0);
   }
 
-  window.jobBoardDayMatch = isVisibleJob;
+  window.jobBoardDayMatch = (job) => isMainDayJob(job, state.jobs);
   window.jobBoardDayView = () => 'current';
 
-  function appendYesterdaySection(allJobs) {
+  function appendPreviousSection(allJobs) {
     const grid = $('#jobsGrid');
     if (!grid) return;
     grid.querySelector('#yesterdayJobsSection')?.remove();
 
-    const jobs = yesterdayJobs(allJobs);
+    const jobs = previousJobs(allJobs);
     if (!jobs.length) return;
 
     const section = document.createElement('section');
@@ -109,30 +119,38 @@
     grid.append(section);
   }
 
+  function setVisibleCounters(mainJobs) {
+    const open = mainJobs.filter((job) => job.status === 'open').length;
+    const claimed = mainJobs.filter((job) => job.status === 'claimed').length;
+    const filled = mainJobs.filter((job) => job.status === 'filled').length;
+    const mine = mainJobs.filter((job) => {
+      if (!['open', 'claimed'].includes(job.status)) return false;
+      if (Array.isArray(job.claims)) {
+        return job.claims.some((claim) => isSameAgent(claim.agent_name)
+          && Math.max((Number(claim.quantity_claimed) || 0) - (Number(claim.quantity_filled) || 0), 0) > 0);
+      }
+      return isSameAgent(job.claimed_by);
+    }).length;
+    if ($('#openCount')) $('#openCount').textContent = open;
+    if ($('#claimedCount')) $('#claimedCount').textContent = claimed;
+    if ($('#filledCount')) $('#filledCount').textContent = filled;
+    if ($('#mineCount')) $('#mineCount').textContent = mine;
+  }
+
   const baseRender = render;
-  render = function currentJobsWithYesterdayRender() {
-    const allJobs = state.jobs;
-    state.jobs = allJobs.filter(isVisibleJob);
+  render = function stableBoardRender() {
+    const allJobs = Array.isArray(state.jobs) ? state.jobs : [];
+    const key = boardDayKey(allJobs);
+    const mainJobs = allJobs.filter((job) => isOperational(job) && jobDayKey(job) === key);
+
+    state.jobs = mainJobs;
     try {
       baseRender();
     } finally {
       state.jobs = allJobs;
     }
-    appendYesterdaySection(allJobs);
+
+    setVisibleCounters(mainJobs);
+    appendPreviousSection(allJobs);
   };
-
-  if (!document.querySelector('link[data-recommendations-top]')) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'recommendations-top.css?v=1';
-    link.dataset.recommendationsTop = '1';
-    document.head.append(link);
-  }
-
-  if (!document.querySelector('script[data-recommendations-top]')) {
-    const script = document.createElement('script');
-    script.src = 'recommendations-top.js?v=2';
-    script.dataset.recommendationsTop = '1';
-    document.body.append(script);
-  }
 })();
