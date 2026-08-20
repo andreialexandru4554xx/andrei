@@ -1,3 +1,4 @@
+
 const seedJobs = [
   {id:"j1",title:"Carpenter — W14",trade:"Carpenter",postcode:"W14",rate:26,first:"First A",start:"Tomorrow",skills:["CSCS","tools"]},
   {id:"j2",title:"Labourer — Croydon",trade:"Labourer",postcode:"CR0",rate:14.5,first:"Unassigned — OPEN",start:"ASAP",skills:["CSCS"]},
@@ -165,6 +166,12 @@ function renderJobs(){
         <span class="mini">Top ${top}%</span>
         ${confWorker?`<span class="mini" style="color:#047857">Confirmed</span>`:""}
       </div>
+      <div class="ownership-row single">
+        <div class="owner-box first-box">
+          <span class="owner-label">FIRST · JOB OWNER</span>
+          <strong>${esc(j.first||"Unassigned — OPEN")}</strong>
+        </div>
+      </div>
     </article>`
   }).join("");
 }
@@ -193,10 +200,20 @@ function renderMatches(){
           <div class="avatar">${esc(initials(w.name))}</div>
           <div>
             <h3>${esc(w.name)}</h3>
-            <div class="meta">${esc(w.trade)} · ${esc(w.postcode||"Unknown")} · Second: ${esc(w.second||"—")}</div>
+            <div class="meta">${esc(w.trade)} · ${esc(w.postcode||"Unknown")}</div>
           </div>
         </div>
         <div class="score ${scoreClass(w.score)}">${w.score}<small>MATCH</small></div>
+      </div>
+      <div class="ownership-row">
+        <div class="owner-box first-box">
+          <span class="owner-label">FIRST · JOB OWNER</span>
+          <strong>${esc(job.first||"Unassigned — OPEN")}</strong>
+        </div>
+        <div class="owner-box second-box">
+          <span class="owner-label">SECOND · WORKER CONTACT</span>
+          <strong>${esc(w.second||"Unassigned")}</strong>
+        </div>
       </div>
       <div class="reasons">
         ${w.reasons.slice(0,6).map(r=>`<span class="reason ${r.tone}">${esc(r.label)}</span>`).join("")}
@@ -223,7 +240,17 @@ function renderConfirmed(){
   confirmedList.innerHTML=items.map(({worker,job})=>`
     <article class="confirmed-card">
       <h3>${esc(worker.name)} <span class="arrow">→</span> ${esc(job.title)}</h3>
-      <p>${esc(worker.trade)} · ${esc(worker.postcode)} · First: ${esc(job.first||"—")}</p>
+      <p>${esc(worker.trade)} · ${esc(worker.postcode)}</p>
+      <div class="ownership-row compact">
+        <div class="owner-box first-box">
+          <span class="owner-label">FIRST</span>
+          <strong>${esc(job.first||"Unassigned — OPEN")}</strong>
+        </div>
+        <div class="owner-box second-box">
+          <span class="owner-label">SECOND</span>
+          <strong>${esc(worker.second||"Unassigned")}</strong>
+        </div>
+      </div>
       <button class="small-btn" data-release="${worker.id}">Release</button>
     </article>
   `).join("") || `<div class="empty">No confirmed matches yet.</div>`;
