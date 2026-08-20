@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow">REAL BLUE ↔ JOB BOARD MATCHES</p>
       <h1>Real recruitment situations only</h1>
-      <p class="subtitle">Every match below requires a real Blue call and a real Job Board vacancy. No call = no match.</p>
+      <p class="subtitle">Every match below requires a real Blue call and a real Job Board vacancy. No call = no match. Live refresh every 30 seconds.</p>
     </div>
   </header>
 
@@ -21,7 +21,7 @@
       <div class="rule-icon">↔</div>
       <div>
         <strong>Matching rule</strong>
-        <p>1) A worker must have a real Blue call. 2) The call supplies the real Second, call time and conversation evidence. 3) Job Board supplies the real vacancy and First. 4) Only then do we compare trade, location, availability, rate and conversation. If there is no Blue call, the worker does not appear as a match.</p>
+        <p>1) A worker must have a real Blue call. 2) The call supplies the real Second, call time and conversation evidence. 3) Job Board supplies the real vacancy, First and Claim Job. 4) Calls and jobs from 19 + 20 Aug are re-evaluated automatically every 30 seconds. If there is no Blue call, the worker does not appear as a match.</p>
       </div>
     </section>
 
@@ -40,7 +40,7 @@
     <section class="top10-panel">
       <div class="section-head">
         <div>
-          <p class="eyebrow">VERIFIED BLUE CALLS ONLY</p>
+          <p class="eyebrow">VERIFIED BLUE CALLS ONLY · LIVE 30 SEC</p>
           <h2>Blue calls matched to Job Board</h2>
         </div>
         <span class="count-badge" id="caseCount"></span>
@@ -54,14 +54,15 @@
         <div><strong>1. Blue call required</strong><p>No real call means the candidate is excluded from the matching screen.</p></div>
         <div><strong>2. Second</strong><p>The Second is taken from Blue's real <code>agent_name</code>.</p></div>
         <div><strong>3. First</strong><p>The First is taken from Job Board's real <code>created_by</code> field.</p></div>
-        <div><strong>4. Trade</strong><p>Worker trade is compared with the live job trade.</p></div>
-        <div><strong>5. Location</strong><p>Worker postcode/area is compared with the job postcode/location.</p></div>
-        <div><strong>6. Conversation</strong><p>Interest, availability, rate and restrictions come from the actual Blue call.</p></div>
+        <div><strong>4. Claim Job</strong><p>Where possible, the call is linked to the job the Second had claimed before calling.</p></div>
+        <div><strong>5. Location + trade</strong><p>Worker profile and AI conversation are compared with active job trade and area.</p></div>
+        <div><strong>6. Live refresh</strong><p>The page checks for new calls, summaries, claims and jobs every 30 seconds without reloading.</p></div>
       </div>
     </section>
   </main>
 
   <script src="app.js"></script>
   <script src="called-only.js"></script>
+  <script src="live-refresh.js"></script>
 </body>
 </html>
