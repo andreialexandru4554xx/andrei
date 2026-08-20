@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow">REAL BLUE ↔ JOB BOARD MATCHES</p>
       <h1>Real recruitment situations only</h1>
-      <p class="subtitle">Every card below is grounded in a real Blue call and a real Job Board vacancy. No demo workers, no demo Firsts, no demo Seconds.</p>
+      <p class="subtitle">Every card below is grounded in real Blue / worker database data and a real Job Board vacancy. No demo workers, no demo Firsts, no demo Seconds.</p>
     </div>
   </header>
 
@@ -21,7 +21,7 @@
       <div class="rule-icon">↔</div>
       <div>
         <strong>How the mechanism works</strong>
-        <p>1) Blue gives us the real call, Second, call time, worker profile and AI summary. 2) Job Board gives us the real vacancy, trade, location/rate and the First who posted it. 3) The engine compares trade + location + availability + conversation evidence. 4) We classify the result as STRONG MATCH, FOLLOW-UP or BLOCKED. A worker is never treated as confirmed until the exact job is confirmed.</p>
+        <p>1) Blue gives us the real call, Second, call time, worker profile and AI summary when a call exists. 2) Job Board gives us the real vacancy, trade, location/rate and the First who posted it. 3) The engine compares trade + location + availability + conversation evidence. 4) If no Blue call exists yet, the candidate can still appear as an exact database match, but is marked NEEDS BLUE CALL rather than confirmed.</p>
       </div>
     </section>
 
@@ -41,7 +41,7 @@
       <div class="section-head">
         <div>
           <p class="eyebrow">VERIFIED REAL CASES</p>
-          <h2>Blue calls matched to Job Board</h2>
+          <h2>Blue / worker database matched to Job Board</h2>
         </div>
         <span class="count-badge" id="caseCount"></span>
       </div>
@@ -49,23 +49,19 @@
     </section>
 
     <section class="explain-panel">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">MATCHING LOGIC</p>
-          <h2>What counts as a real match?</h2>
-        </div>
-      </div>
+      <div class="section-head"><div><p class="eyebrow">MATCHING LOGIC</p><h2>What counts as a real match?</h2></div></div>
       <div class="explain-grid">
-        <div><strong>1. Worker identity</strong><p>Worker ID from Blue links the call to the worker profile.</p></div>
-        <div><strong>2. Second</strong><p>The Second is taken from Blue's real <code>agent_name</code>, not guessed from transcript wording.</p></div>
+        <div><strong>1. Worker identity</strong><p>Worker ID links the worker profile to Blue activity when available.</p></div>
+        <div><strong>2. Second</strong><p>The Second is taken from Blue's real <code>agent_name</code>. If no call exists, the site says so explicitly.</p></div>
         <div><strong>3. First</strong><p>The First is taken from Job Board's real <code>created_by</code> field for that vacancy.</p></div>
-        <div><strong>4. Trade</strong><p>Exact primary trade is preferred. Related trades are marked for verification instead of auto-send.</p></div>
+        <div><strong>4. Trade</strong><p>Exact primary trade is preferred. Related trades are marked for verification.</p></div>
         <div><strong>5. Location</strong><p>Worker postcode/area is compared with the job postcode or location.</p></div>
-        <div><strong>6. Conversation</strong><p>Availability, rate, documents and interest come from the real Blue call summary/transcript.</p></div>
+        <div><strong>6. Conversation</strong><p>Availability, rate, documents and interest come from the real Blue call when one exists.</p></div>
       </div>
     </section>
   </main>
 
   <script src="app.js"></script>
+  <script src="bn11-update.js"></script>
 </body>
 </html>
