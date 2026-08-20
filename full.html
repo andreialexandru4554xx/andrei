@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#050812" />
+  <meta name="description" content="RecruitFlow Business Tower 3D — versiunea completă." />
+  <title>RecruitFlow Business Tower 3D — Full</title>
+  <link rel="stylesheet" href="./styles.css?v=20260820-tower10" />
+  <link rel="stylesheet" href="./easy-navigation.css?v=20260820-easy2" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app-shell">
+    <canvas id="world" aria-label="Turn 3D interactiv cu zece niveluri ale businessului"></canvas>
+    <header class="topbar glass">
+      <div class="brand"><span class="brand-mark">10F</span><div><strong>RecruitFlow Business Tower</strong><span>Versiunea completă</span></div></div>
+      <div class="top-actions"><button id="tour-toggle" class="primary-btn">▶ Tur automat</button><button id="previous-floor" class="ghost-btn">↓ Etaj</button><button id="next-floor" class="ghost-btn">↑ Etaj</button><button id="tower-view" class="ghost-btn">Vedere turn</button><a class="ghost-btn" href="./">Mod rapid</a></div>
+      <div class="visitor-status"><span class="status-dot"></span><span id="visitor-level">Vizitator • Nivel 1</span><span class="divider"></span><strong id="visitor-xp">0 XP</strong></div>
+    </header>
+    <aside class="floor-panel glass"><div class="panel-head"><div><div class="eyebrow">ELEVATOR / BUSINESS MAP</div><h1>10 niveluri</h1></div><span id="floor-progress">0/10</span></div><p class="muted compact">Apasă un nivel pentru a explora businessul.</p><div id="floor-list" class="floor-list"></div></aside>
+    <section class="floor-detail glass" id="floor-detail"><div class="detail-header"><div><div class="eyebrow" id="detail-eyebrow">FLOOR 01</div><h2 id="detail-title">Welcome & Business Map</h2><p id="detail-subtitle" class="detail-subtitle"></p></div><button id="close-detail" class="icon-btn">×</button></div><p id="detail-description" class="muted detail-description"></p><div id="detail-metrics" class="metric-grid"></div><div class="detail-section"><div class="section-label">Fluxul etajului</div><div id="workflow-steps" class="workflow-steps"></div></div><div class="detail-columns"><div class="detail-section"><div class="section-label">Ce poți face aici</div><div id="what-you-can-do" class="chip-list"></div></div><div class="detail-section"><div class="section-label">Roluri</div><div id="floor-roles" class="chip-list"></div></div></div><div class="detail-section"><div class="section-label">Aplicații și sisteme</div><div id="floor-apps" class="chip-list"></div></div></section>
+    <aside class="mission-panel glass"><div class="panel-head mission-head"><div><div class="eyebrow">BUSINESS QUESTS</div><h3>Misiuni vizitator</h3></div><button id="open-careers" class="tiny-btn">Roluri</button></div><div class="progress-track"><span id="mission-progress-bar"></span></div><div id="mission-list" class="mission-list"></div><button id="open-guide" class="wide-btn">Deschide ghidul companiei</button></aside>
+    <section id="drawer" class="drawer glass" aria-hidden="true"><div class="drawer-head"><div><div id="drawer-eyebrow" class="eyebrow">COMPANY GUIDE</div><h2 id="drawer-title">Cum funcționează compania</h2></div><button id="close-drawer" class="icon-btn">×</button></div><div class="drawer-tabs"><button class="drawer-tab active" data-drawer-tab="guide">Business</button><button class="drawer-tab" data-drawer-tab="careers">Roluri</button><button class="drawer-tab" data-drawer-tab="apps">Aplicații</button><button class="drawer-tab" data-drawer-tab="glossary">Dicționar</button></div><div id="drawer-content" class="drawer-content"></div></section><div id="drawer-backdrop" class="drawer-backdrop"></div>
+    <div class="bottom-console glass"><div class="console-floor"><span id="console-number">01</span><div><strong id="console-title">Welcome</strong><small id="console-status">Selectează un etaj sau pornește turul</small></div></div><div class="console-meter"><span id="console-meter-bar"></span></div><div class="console-hints"><span><b>Drag</b> rotire</span><span><b>Wheel</b> zoom</span><span><b>Click 3D</b> selectare</span></div></div>
+  </div>
+  <script type="module">
+    await import('./src/performance-preflight.js?v=20260820-full')
+    await import('./src/main.js?v=20260820-full')
+    await import('./src/easy-navigation.js?v=20260820-full')
+  </script>
+</body>
+</html>
