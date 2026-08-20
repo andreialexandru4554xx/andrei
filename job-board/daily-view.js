@@ -8,12 +8,14 @@
     yesterday_section_subtitle: 'Mai jos, separat de lista principală · doar joburile încă active.',
     yesterday_positions: '{count} poziții',
     yesterday_empty: 'Nu mai sunt joburi active de ieri.',
+    view_recommended: 'Recomandate AI',
   });
   Object.assign(I18N.en, {
     yesterday_section_title: "Yesterday's jobs",
     yesterday_section_subtitle: 'Shown lower down, separate from the main list · active jobs only.',
     yesterday_positions: '{count} positions',
     yesterday_empty: 'There are no active jobs left from yesterday.',
+    view_recommended: 'AI Recommended',
   });
 
   function londonParts(date = new Date()) {
@@ -137,6 +139,53 @@
     if ($('#mineCount')) $('#mineCount').textContent = mine;
   }
 
+  function syncRecommendationsTop() {
+    const switcher = document.querySelector('.transparency-switcher');
+    const recTab = switcher?.querySelector('[data-ops-view="recommendations"]');
+    if (!switcher || !recTab) return false;
+
+    const tabLabel = recTab.querySelector('[data-i18n="view_recommended"]');
+    if (tabLabel) tabLabel.textContent = t('view_recommended');
+    switcher.prepend(recTab);
+
+    let entry = document.querySelector('#aiRecommendationsTop');
+    if (!entry) {
+      if (!document.querySelector('link[data-recommendations-top]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'recommendations-top.css?v=2';
+        link.dataset.recommendationsTop = '1';
+        document.head.append(link);
+      }
+      entry = document.createElement('button');
+      entry.id = 'aiRecommendationsTop';
+      entry.className = 'ai-recommendations-top';
+      entry.type = 'button';
+      entry.innerHTML = `
+        <span class="ai-recommendations-icon">✦</span>
+        <span class="ai-recommendations-copy">
+          <strong id="aiRecommendationsTopTitle"></strong>
+          <small id="aiRecommendationsTopHint"></small>
+        </span>
+        <span class="ai-recommendations-count" id="aiRecommendationsTopCount">0</span>
+        <span class="ai-recommendations-arrow">→</span>`;
+      const kpiStrip = document.querySelector('#opsKpiStrip');
+      (kpiStrip || switcher).before(entry);
+      entry.addEventListener('click', () => recTab.click());
+    }
+
+    const ro = state.lang !== 'en';
+    const title = entry.querySelector('#aiRecommendationsTopTitle');
+    const hint = entry.querySelector('#aiRecommendationsTopHint');
+    const count = entry.querySelector('#aiRecommendationsTopCount');
+    if (title) title.textContent = ro ? 'RECOMANDATE AI' : 'AI RECOMMENDED';
+    if (hint) hint.textContent = ro
+      ? 'Vezi rapid joburile recomandate pentru recruiterul conectat'
+      : 'Quickly see the best jobs recommended for the signed-in recruiter';
+    if (count) count.textContent = document.querySelector('#recommendedTabCount')?.textContent || '0';
+    return true;
+  }
+
   const baseRender = render;
   render = function stableBoardRender() {
     const allJobs = Array.isArray(state.jobs) ? state.jobs : [];
@@ -152,5 +201,12 @@
 
     setVisibleCounters(mainJobs);
     appendPreviousSection(allJobs);
+    syncRecommendationsTop();
   };
+
+  let recommendationAttempts = 0;
+  const recommendationTimer = window.setInterval(() => {
+    recommendationAttempts += 1;
+    if (syncRecommendationsTop() || recommendationAttempts >= 30) window.clearInterval(recommendationTimer);
+  }, 100);
 })();
