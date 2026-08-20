@@ -48,4 +48,19 @@
       state.jobs = allJobs;
     }
   };
+
+  if (!document.querySelector('link[data-recommendations-top]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'recommendations-top.css?v=1';
+    link.dataset.recommendationsTop = '1';
+    document.head.append(link);
+  }
+
+  if (!document.querySelector('script[data-recommendations-top]')) {
+    const script = document.createElement('script');
+    script.src = 'recommendations-top.js?v=1';
+    script.dataset.recommendationsTop = '1';
+    document.body.append(script);
+  }
 })();
