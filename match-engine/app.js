@@ -1,4 +1,3 @@
-
 const seedJobs = [
   {id:"j1",title:"Carpenter — W14",trade:"Carpenter",postcode:"W14",rate:26,first:"First A",start:"Tomorrow",skills:["CSCS","tools"]},
   {id:"j2",title:"Labourer — Croydon",trade:"Labourer",postcode:"CR0",rate:14.5,first:"Unassigned — OPEN",start:"ASAP",skills:["CSCS"]},
@@ -150,6 +149,43 @@ function renderStats(){
   ];
   $("#stats").innerHTML=data.map(([n,l])=>`<div class="stat"><div class="num">${n}</div><div class="label">${l}</div></div>`).join("");
 }
+function renderTop10(){
+  const curated=[
+    ["j2","w2","PRIMARY"],
+    ["j4","w3","PRIMARY"],
+    ["j3","w3","ALTERNATIVE"],
+    ["j1","w4","PRIMARY"],
+    ["j5","w4","ALTERNATIVE"],
+    ["j1","w1","PRIMARY"],
+    ["j6","w5","PRIMARY"],
+    ["j7","w6","PRIMARY"],
+    ["j6","w8","PRIMARY"],
+    ["j7","w7","PRIMARY"]
+  ];
+  const rows=curated.map(([jid,wid,role],i)=>{
+    const job=jobs.find(j=>j.id===jid), worker=workers.find(w=>w.id===wid);
+    if(!job||!worker) return "";
+    const m=scoreMatch(worker,job);
+    const verdict=m.score>=90?"EXACT / VERY STRONG":m.score>=80?"STRONG":m.score>=70?"GOOD — VERIFY": "REVIEW";
+    return `<article class="top10-card">
+      <div class="top10-rank">#${i+1}</div>
+      <div class="top10-main">
+        <div class="top10-title"><strong>${esc(worker.name)}</strong><span>→</span><strong>${esc(job.title)}</strong></div>
+        <div class="top10-sub">${esc(worker.trade)} · ${esc(worker.postcode||"Unknown")} · ${esc(verdict)}</div>
+        <div class="ownership-row compact">
+          <div class="owner-box first-box"><span class="owner-label">FIRST</span><strong>${esc(job.first||"Unassigned — OPEN")}</strong></div>
+          <div class="owner-box second-box"><span class="owner-label">SECOND</span><strong>${esc(worker.second||"Unassigned")}</strong></div>
+        </div>
+      </div>
+      <div class="top10-side">
+        <span class="role-badge ${role==='PRIMARY'?'primary-role':'alt-role'}">${role}</span>
+        <div class="score ${scoreClass(m.score)}">${m.score}<small>MATCH</small></div>
+      </div>
+    </article>`;
+  }).join("");
+  $("#top10List").innerHTML=rows;
+}
+
 function renderJobs(){
   const list=filteredJobs();
   $("#jobCount").textContent=list.length;
@@ -256,7 +292,7 @@ function renderConfirmed(){
   `).join("") || `<div class="empty">No confirmed matches yet.</div>`;
 }
 function render(){
-  renderTrades();renderStats();renderJobs();renderMatches();renderConfirmed();save();
+  renderTrades();renderStats();renderTop10();renderJobs();renderMatches();renderConfirmed();save();
 }
 jobList.addEventListener("click",e=>{
   const card=e.target.closest("[data-job]");if(!card)return;
