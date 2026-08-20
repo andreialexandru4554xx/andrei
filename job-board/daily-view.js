@@ -79,7 +79,6 @@
     return jobs.reduce((sum, job) => sum + Math.max(1, Number(job.workers_needed) || 1), 0);
   }
 
-  // Current-day filtering stays invisible; yesterday is shown only in the lower secondary section.
   window.jobBoardDayMatch = isVisibleJob;
   window.jobBoardDayView = () => 'current';
 
@@ -132,7 +131,7 @@
 
   if (!document.querySelector('script[data-recommendations-top]')) {
     const script = document.createElement('script');
-    script.src = 'recommendations-top.js?v=1';
+    script.src = 'recommendations-top.js?v=2';
     script.dataset.recommendationsTop = '1';
     document.body.append(script);
   }
