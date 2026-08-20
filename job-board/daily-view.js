@@ -210,3 +210,11 @@
     if (syncRecommendationsTop() || recommendationAttempts >= 30) window.clearInterval(recommendationTimer);
   }, 100);
 })();
+
+(() => {
+  if (document.querySelector('script[data-steel-erector-trade]')) return;
+  const script = document.createElement('script');
+  script.src = 'steel-erector.js?v=1';
+  script.dataset.steelErectorTrade = '1';
+  document.body.append(script);
+})();
