@@ -60,11 +60,31 @@
   observer.observe(document.documentElement, { childList: true, subtree: true });
   removeDeprecatedUi();
 
+  function loadDailyView() {
+    addStyle('daily-view', 'daily-view.css?v=1');
+    const existing = document.querySelector('script[data-daily-view]');
+    if (existing) {
+      if (state.jobs.length) render();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'daily-view.js?v=1';
+    script.dataset.dailyView = '1';
+    script.addEventListener('load', () => {
+      if (state.jobs.length) render();
+    }, { once: true });
+    document.body.append(script);
+  }
+
   function loadOperations() {
     addStyle('operations-suite', 'operations-suite.css?v=3');
     addStyle('operations-tweaks', 'operations-tweaks.css?v=3');
     const existing = document.querySelector('script[data-operations-suite]');
-    if (existing) { removeDeprecatedUi(); return; }
+    if (existing) {
+      removeDeprecatedUi();
+      window.setTimeout(loadDailyView, 120);
+      return;
+    }
     const script = document.createElement('script');
     script.src = 'operations-suite.js?v=3';
     script.dataset.operationsSuite = '1';
@@ -73,7 +93,9 @@
       window.setTimeout(removeDeprecatedUi, 100);
       window.setTimeout(removeDeprecatedUi, 500);
       window.setTimeout(removeDeprecatedUi, 1500);
+      window.setTimeout(loadDailyView, 120);
     }, { once: true });
+    script.addEventListener('error', loadDailyView, { once: true });
     document.body.append(script);
   }
 
