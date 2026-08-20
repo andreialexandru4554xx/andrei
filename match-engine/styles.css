@@ -28,3 +28,16 @@ h1,h2,h3,p{margin-top:0}.topbar h1{margin-bottom:5px;letter-spacing:-.04em;font-
 dialog{border:0;border-radius:18px;padding:0;width:min(720px,calc(100vw - 20px));box-shadow:0 30px 90px rgba(0,0,0,.28)}dialog::backdrop{background:rgba(15,23,42,.52)}.dialog-form{padding:20px}.dialog-head{display:flex;justify-content:space-between;align-items:flex-start}.icon-btn{width:36px;height:36px;border:0;border-radius:10px;background:#f1f5f9;font-size:23px;cursor:pointer}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:grid;gap:5px;font-size:12px;font-weight:800;margin-bottom:10px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
 @media(max-width:1180px){.layout{grid-template-columns:270px 1fr}.confirmed-panel{grid-column:1/-1}.confirmed-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.confirmed-card{margin:0}}
 @media(max-width:820px){.topbar{position:static;align-items:flex-start;flex-direction:column}.stats{grid-template-columns:repeat(2,1fr)}.toolbar{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.confirmed-panel{grid-column:auto}.confirmed-list{grid-template-columns:1fr}.jobs-panel{max-height:none}.grid-2{grid-template-columns:1fr}}
+.ownership-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.ownership-row.single{grid-template-columns:1fr;margin:10px 0 0}
+.ownership-row.compact{gap:6px;margin:8px 0 10px}
+.owner-box{border-radius:11px;padding:9px 10px;border:1px solid var(--line);min-width:0}
+.owner-box strong{display:block;font-size:13px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}
+.owner-label{display:block;font-size:9px;letter-spacing:.09em;font-weight:900;margin-bottom:4px}
+.first-box{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a}
+.first-box .owner-label{color:#2563eb}
+.second-box{background:#f5f3ff;border-color:#ddd6fe;color:#4c1d95}
+.second-box .owner-label{color:#7c3aed}
+.job-card .ownership-row{font-size:11px}
+.confirmed-card .owner-box strong{font-size:11px}
+@media(max-width:560px){.ownership-row{grid-template-columns:1fr}}
