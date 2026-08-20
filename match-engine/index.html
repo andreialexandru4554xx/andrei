@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Recruit Match Engine</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">RECRUITMENT MATCHING ENGINE</p>
+      <h1>Jobs → Best Matches → Confirmed</h1>
+      <p class="subtitle">Explainable matching with duplicate protection and human confirmation.</p>
+    </div>
+    <div class="header-actions">
+      <button id="resetBtn" class="btn btn-ghost">Reset demo</button>
+      <button id="recalcBtn" class="btn btn-soft">Recalculate</button>
+      <button id="addWorkerBtn" class="btn btn-ghost">+ Worker</button>
+      <button id="addJobBtn" class="btn btn-primary">+ Job</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="stats" id="stats"></section>
+
+    <section class="toolbar">
+      <input id="searchInput" type="search" placeholder="Search job, trade, postcode, worker, First, Second…" />
+      <select id="tradeFilter"><option value="all">All trades</option></select>
+      <select id="statusFilter">
+        <option value="all">All candidate states</option>
+        <option value="available">Available</option>
+        <option value="confirmed">Confirmed elsewhere</option>
+        <option value="unavailable">Unavailable</option>
+      </select>
+    </section>
+
+    <section class="rule-banner">
+      <div class="rule-icon">1</div>
+      <div>
+        <strong>One-worker / one-job rule</strong>
+        <p>A worker may appear as a suggestion for several jobs, but only one job can be confirmed. All other suggestions become alternatives automatically.</p>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="jobs-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">OPEN JOBS</p>
+            <h2>Jobs</h2>
+          </div>
+          <span class="count-badge" id="jobCount"></span>
+        </div>
+        <div id="jobList" class="job-list"></div>
+      </aside>
+
+      <section class="matches-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">AI-ASSISTED SHORTLIST</p>
+            <h2 id="matchesTitle">Best Matches</h2>
+          </div>
+          <div class="legend">
+            <span><i class="dot strong"></i> 80+</span>
+            <span><i class="dot good"></i> 65–79</span>
+            <span><i class="dot review"></i> 50–64</span>
+          </div>
+        </div>
+        <div id="matchList" class="match-list"></div>
+      </section>
+
+      <aside class="confirmed-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">LOCKED MATCHES</p>
+            <h2>Confirmed</h2>
+          </div>
+          <span class="count-badge" id="confirmedCount"></span>
+        </div>
+        <div id="confirmedList" class="confirmed-list"></div>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="jobDialog">
+    <form id="jobForm" class="dialog-form">
+      <div class="dialog-head">
+        <div><p class="eyebrow">NEW JOB</p><h2>Add job</h2></div>
+        <button type="button" class="icon-btn" data-close="jobDialog">×</button>
+      </div>
+      <div class="grid-2">
+        <label>Job title<input name="title" required placeholder="Carpenter — W14"></label>
+        <label>Trade<input name="trade" required placeholder="Carpenter"></label>
+        <label>Postcode<input name="postcode" required placeholder="W14"></label>
+        <label>Rate (£/h)<input name="rate" type="number" min="0" step="0.5" placeholder="26"></label>
+        <label>First<input name="first" placeholder="First A"></label>
+        <label>Start<input name="start" placeholder="Tomorrow"></label>
+      </div>
+      <label>Required skills<input name="skills" placeholder="CSCS, tools, cladding"></label>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" data-close="jobDialog">Cancel</button>
+        <button class="btn btn-primary">Save job</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="workerDialog">
+    <form id="workerForm" class="dialog-form">
+      <div class="dialog-head">
+        <div><p class="eyebrow">NEW WORKER</p><h2>Add worker</h2></div>
+        <button type="button" class="icon-btn" data-close="workerDialog">×</button>
+      </div>
+      <div class="grid-2">
+        <label>Name<input name="name" required placeholder="Demo Worker"></label>
+        <label>Primary trade<input name="trade" required placeholder="Carpenter"></label>
+        <label>Postcode<input name="postcode" placeholder="NW10"></label>
+        <label>Availability
+          <select name="availability">
+            <option value="immediate">Immediate</option>
+            <option value="soon">Soon</option>
+            <option value="unknown">Unknown</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+        </label>
+        <label>Expected rate (£/h)<input name="rate" type="number" min="0" step="0.5" placeholder="26"></label>
+        <label>Second<input name="second" placeholder="Second A"></label>
+      </div>
+      <label>Verified skills<input name="skills" placeholder="CSCS, tools, cladding"></label>
+      <label>Conversation summary<textarea name="summary" rows="4" placeholder="No phone numbers or email addresses."></textarea></label>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" data-close="workerDialog">Cancel</button>
+        <button class="btn btn-primary">Save worker</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
