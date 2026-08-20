@@ -12,10 +12,17 @@ const realCases = [
 
 const $ = s => document.querySelector(s);
 const esc = (v='') => String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-function badge(status){if(status==='strong')return '<span class="role-badge primary-role">STRONG MATCH</span>';if(status==='followup')return '<span class="role-badge alt-role">FOLLOW-UP</span>';return '<span class="role-badge blocked-role">BLOCKED / NOT NOW</span>'}
+function badge(status){if(status==='strong')return '<span class="role-badge primary-role">STRONG MATCH</span>';if(status==='followup')return '<span class="role-badge alt-role">FOLLOW-UP</span>';return '<span class="role-badge blocked-role">BLOCKED</span>'}
 function scoreClass(s){return s>=90?'score-strong':s>=75?'score-good':s>=50?'score-review':'score-low'}
-function renderStats(rows){const strong=rows.filter(x=>x.status==='strong').length,follow=rows.filter(x=>x.status==='followup').length,blocked=rows.filter(x=>x.status==='blocked').length;$('#stats').innerHTML=[[rows.length,'Current matches'],[strong,'Strong matches'],[follow,'Follow-up'],[blocked,'Blocked'],['20 Aug · 08:21 UK','Latest Blue AI call']].map(([n,l])=>`<div class="stat"><div class="num">${esc(n)}</div><div class="label">${esc(l)}</div></div>`).join('')}
-function vrow(label,value,cls=''){return `<div class="vertical-row ${cls}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`}
+function callRate(summary=''){
+  const text=String(summary);
+  const pound=text.match(/£\s?\d+(?:\.\d+)?(?:\s*[-–]\s*£?\d+(?:\.\d+)?)?\s*(?:\/h|\/hour|per hour|ph|pph)?/i);
+  if(pound) return pound[0].replace(/\s+/g,' ');
+  const plain=text.match(/\b(\d{2}(?:\.\d+)?)\s*(?:\/h|\/hour|per hour|pe oră|pe ora|ph|pph)\b/i);
+  return plain ? `£${plain[1]}/h` : 'Not confirmed';
+}
+function renderStats(rows){const strong=rows.filter(x=>x.status==='strong').length,follow=rows.filter(x=>x.status==='followup').length,blocked=rows.filter(x=>x.status==='blocked').length;$('#stats').innerHTML=[[rows.length,'Current matches'],[strong,'Strong'],[follow,'Follow-up'],[blocked,'Blocked'],['08:21 UK','Latest AI call']].map(([n,l])=>`<div class="stat"><div class="num">${esc(n)}</div><div class="label">${esc(l)}</div></div>`).join('')}
+function tile(label,value,cls=''){return `<div class="scan-tile ${cls}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`}
 function render(){
   const q=$('#searchInput').value.trim().toLowerCase();
   const status=$('#statusFilter').value;
@@ -23,49 +30,29 @@ function render(){
   $('#caseCount').textContent=rows.length;
   renderStats(rows);
   $('#caseList').innerHTML=rows.map(x=>`<article class="top10-card match-${x.status}">
-    <div class="card-head">
-      <div><div class="match-found-label">MATCH FOUND</div><div class="rank-line">#${x.id} · ${esc(x.worker)} → ${esc(x.job)}</div></div>
-      <div class="score ${scoreClass(x.confidence)}">${x.confidence}<small>CONFIDENCE</small></div>
+    <div class="compact-head">
+      <div class="head-left"><span class="match-index">#${x.id}</span><div><div class="worker-name">${esc(x.worker)}</div><div class="worker-sub">${esc(x.workerTrade)} · ${esc(x.workerPostcode)}</div></div></div>
+      <div class="head-right">${badge(x.status)}<div class="score ${scoreClass(x.confidence)}">${x.confidence}<small>%</small></div></div>
     </div>
 
-    <section class="vertical-section worker-section">
-      <div class="section-kicker">1 · MUNCITOR</div>
-      ${vrow('NUME MUNCITOR',x.worker,'emphasis')}
-      ${vrow('MESERIE',x.workerTrade)}
-      ${vrow('POSTCODE MUNCITOR',x.workerPostcode)}
-    </section>
+    <div class="scan-grid people-grid">
+      ${tile('SECOND · A SUNAT',x.second,'second-tile')}
+      ${tile('ORA APELULUI',x.callTime)}
+      ${tile('OUTCOME',x.callOutcome)}
+      ${tile('FIRST · A POSTAT',x.first,'first-tile')}
+    </div>
 
-    <section class="vertical-section second-section">
-      <div class="section-kicker">2 · SECOND · CINE A SUNAT</div>
-      ${vrow('SECOND AGENT',x.second,'emphasis')}
-      ${vrow('ORA APELULUI',x.callTime)}
-      ${vrow('OUTCOME',x.callOutcome)}
-    </section>
+    <div class="scan-grid job-grid">
+      ${tile('JOB',x.job,'job-tile')}
+      ${tile('MESERIE JOB',x.jobTrade)}
+      ${tile('POSTCODE JOB',x.jobPostcode)}
+      ${tile('RATE JOB',x.rate,'rate-job')}
+      ${tile('RATE DIN APEL',callRate(x.summary),'rate-call')}
+    </div>
 
-    <section class="vertical-section summary-section">
-      <div class="section-kicker">3 · REZUMAT AI BLUE</div>
-      <div class="summary">${esc(x.summary)}</div>
-    </section>
+    <div class="summary-compact"><span>REZUMAT AI</span><p>${esc(x.summary)}</p></div>
 
-    <section class="vertical-section job-section">
-      <div class="section-kicker">4 · JOB DIN JOB DASHBOARD</div>
-      ${vrow('JOB',x.job,'emphasis')}
-      ${vrow('MESERIE JOB',x.jobTrade)}
-      ${vrow('POSTCODE JOB',x.jobPostcode)}
-      ${vrow('RATĂ',x.rate)}
-    </section>
-
-    <section class="vertical-section first-section">
-      <div class="section-kicker">5 · FIRST · CINE A POSTAT JOBUL</div>
-      ${vrow('FIRST',x.first,'emphasis')}
-    </section>
-
-    <section class="vertical-section why-section">
-      <div class="section-kicker">6 · DE CE ESTE MATCH</div>
-      <div class="reasons">${x.why.map(r=>`<span class="reason ${x.status==='strong'?'ok':'info'}">${esc(r)}</span>`).join('')}</div>
-    </section>
-
-    <div class="card-footer">${badge(x.status)}<span>Blue Supabase + Job Dashboard</span></div>
+    <div class="reason-line">${x.why.slice(0,4).map(r=>`<span class="reason ${x.status==='strong'?'ok':'info'}">${esc(r)}</span>`).join('')}</div>
   </article>`).join('')||'<div class="empty">No real situations match these filters.</div>'
 }
 $('#searchInput').addEventListener('input',render);$('#statusFilter').addEventListener('change',render);render();
