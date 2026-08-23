@@ -50,6 +50,26 @@ jobs:
             -c:a libmp3lame -b:a 192k \
             voice-paisie-natural/voce-naturala-paisie.mp3
 
+      - name: Generate compact sample for chat delivery
+        run: |
+          cat > /tmp/paisie-short.txt <<'TEXT'
+          În liniștea Sfântului Munte, Sfântul Paisie îi primea pe oameni cu blândețe... și le reda speranța.
+          TEXT
+          edge-tts \
+            --voice ro-RO-EmilNeural \
+            --rate=-12% \
+            --pitch=-2Hz \
+            --volume=+0% \
+            --file /tmp/paisie-short.txt \
+            --write-media /tmp/paisie-short-raw.mp3
+
+          ffmpeg -y -hide_banner -loglevel warning \
+            -i /tmp/paisie-short-raw.mp3 \
+            -af "highpass=f=65,lowpass=f=11000,equalizer=f=170:t=q:w=1:g=1,acompressor=threshold=-20dB:ratio=1.6:attack=18:release=220,loudnorm=I=-17:LRA=8:TP=-1.5" \
+            -ac 1 -ar 24000 -c:a libmp3lame -b:a 48k \
+            voice-paisie-natural/voce-naturala-proba-scurta.mp3
+          base64 -w 0 voice-paisie-natural/voce-naturala-proba-scurta.mp3 > voice-paisie-natural/voce-naturala-proba-scurta.b64
+
       - name: Create listening page
         run: |
           cat > voice-paisie-natural/index.html <<'HTML'
@@ -87,5 +107,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add voice-paisie-natural
-          git commit -m 'Add natural Romanian voice sample for Saint Paisios' || exit 0
+          git commit -m 'Add compact natural Romanian voice sample' || exit 0
           git push
