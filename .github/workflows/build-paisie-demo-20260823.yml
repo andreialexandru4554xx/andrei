@@ -1,0 +1,130 @@
+name: Build Saint Paisios video demo
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-paisie-demo-20260823.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install video tools and fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-noto-core
+
+      - name: Download narration and respectful source images
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/paisie video-paisie-demo
+          curl -L --fail --retry 4 --retry-delay 2 -o /tmp/paisie/voice.mp4 'https://v3b.fal.media/files/b/0aa772dd/2pLNVV2hRsRXJ_P57J0kc_tmpttas3st0.mp4'
+          curl -L --fail --retry 4 --retry-delay 2 -o /tmp/paisie/icon.jpg 'https://monastiriakonitsis.wordpress.com/wp-content/uploads/2015/01/paisios.jpg'
+          curl -L --fail --retry 4 --retry-delay 2 -o /tmp/paisie/portrait.webp 'https://evqaristia.ge/wp-content/uploads/2020/05/paisi-atoneli-2.jpg'
+          curl -L --fail --retry 4 --retry-delay 2 -o /tmp/paisie/panagouda-person.jpg 'https://obitel-minsk.org/assets/img/content/2026/inside/saints/Athonite-cell-at-Panagouda.jpg'
+          curl -L --fail --retry 4 --retry-delay 2 -o /tmp/paisie/panagouda.jpg 'https://doxologia.ro/sites/default/files/styles/max_1300x1300/public/imagine/2015/01/athos_sept_2014-3647_m_0.jpg?itok=VacnAcQg'
+          ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 /tmp/paisie/voice.mp4
+
+      - name: Create subtitles and titles
+        run: |
+          cat > /tmp/paisie/subtitles.ass <<'ASS'
+          [Script Info]
+          ScriptType: v4.00+
+          PlayResX: 1280
+          PlayResY: 720
+          ScaledBorderAndShadow: yes
+          WrapStyle: 2
+
+          [V4+ Styles]
+          Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+          Style: Title,Noto Serif,50,&H00F7F3E8,&H000000FF,&H00101012,&H88000000,0,0,0,0,100,100,1,0,1,2,2,7,70,40,70,1
+          Style: Gold,Noto Serif,29,&H007DC6E6,&H000000FF,&H00101012,&H88000000,0,0,0,0,100,100,1,0,1,2,1,7,74,40,145,1
+          Style: Label,Noto Sans,20,&H00F3F1EA,&H000000FF,&H00101012,&H88000000,0,0,0,0,100,100,0,0,1,2,1,7,55,40,48,1
+          Style: Sub,Noto Sans,28,&H00FAF8F1,&H000000FF,&H00101012,&HA0000000,-1,0,0,0,100,100,0,0,3,3,0,2,70,70,48,1
+          Style: Close,Noto Serif,31,&H007DC6E6,&H000000FF,&H00101012,&H88000000,0,0,0,0,100,100,1,0,1,2,1,8,50,50,100,1
+
+          [Events]
+          Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+          Dialogue: 0,0:00:00.00,0:00:09.40,Title,,0,0,0,,{\fad(800,900)}SFÂNTUL PAISIE
+          Dialogue: 0,0:00:00.00,0:00:09.40,Gold,,0,0,0,,{\fad(800,900)}AGHIORITUL  •  1924—1994
+          Dialogue: 0,0:00:09.00,0:00:48.25,Label,,0,0,0,,{\fad(500,500)}VIAȚA SFÂNTULUI PAISIE
+          Dialogue: 0,0:00:00.80,0:00:06.00,Sub,,0,0,0,,Sfântul Paisie Aghioritul s-a născut în anul 1924,
+          Dialogue: 0,0:00:06.00,0:00:10.80,Sub,,0,0,0,,în Farasa Capadociei, primind la botez numele Arsenie.
+          Dialogue: 0,0:00:10.80,0:00:16.00,Sub,,0,0,0,,La puțin timp, familia sa a fost nevoită să plece în Grecia.
+          Dialogue: 0,0:00:16.00,0:00:22.60,Sub,,0,0,0,,Încă din copilărie, iubea rugăciunea, liniștea\Nși ajutorarea oamenilor.
+          Dialogue: 0,0:00:22.60,0:00:29.70,Sub,,0,0,0,,După serviciul militar, ca operator radio,\Na mers la Sfântul Munte Athos.
+          Dialogue: 0,0:00:29.70,0:00:35.00,Sub,,0,0,0,,Acolo a ales o viață simplă, de post, muncă și rugăciune.
+          Dialogue: 0,0:00:35.00,0:00:40.70,Sub,,0,0,0,,La chilia Panaguda, mii de oameni veneau să-i ceară sfat.
+          Dialogue: 0,0:00:40.70,0:00:44.20,Sub,,0,0,0,,El îi primea cu blândețe și le reda speranța.
+          Dialogue: 0,0:00:44.20,0:00:48.25,Sub,,0,0,0,,Iubirea, smerenia și răbdarea pot lumina\Ncele mai grele încercări.
+          Dialogue: 0,0:00:43.20,0:00:48.25,Close,,0,0,0,,{\fad(700,700)}IUBIRE  •  SMERENIE  •  RĂBDARE
+          ASS
+          sed -i 's/^          //' /tmp/paisie/subtitles.ass
+
+      - name: Render final video
+        run: |
+          set -euo pipefail
+          ffmpeg -y -hide_banner -loglevel warning \
+            -loop 1 -framerate 20 -t 12.625 -i /tmp/paisie/icon.jpg \
+            -loop 1 -framerate 20 -t 12.625 -i /tmp/paisie/portrait.webp \
+            -loop 1 -framerate 20 -t 12.625 -i /tmp/paisie/panagouda-person.jpg \
+            -loop 1 -framerate 20 -t 12.625 -i /tmp/paisie/panagouda.jpg \
+            -i /tmp/paisie/voice.mp4 \
+            -filter_complex "\
+              [0:v]scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,gblur=sigma=18,eq=brightness=-0.34:saturation=0.65[bg0];\
+              [0:v]scale=-1:650[fg0];\
+              [bg0][fg0]overlay=W-w-45:(H-h)/2,zoompan=z='1+0.00030*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1280x720:fps=20,setsar=1[v0];\
+              [1:v]scale=1344:756:force_original_aspect_ratio=increase,crop=1344:756,zoompan=z='1+0.00038*on':x='iw/2-(iw/zoom/2)+8*sin(on/80)':y='ih/2-(ih/zoom/2)-5':d=1:s=1280x720:fps=20,setsar=1[v1];\
+              [2:v]scale=1344:756:force_original_aspect_ratio=increase,crop=1344:756,zoompan=z='1+0.00030*on':x='iw/2-(iw/zoom/2)-6*sin(on/85)':y='ih/2-(ih/zoom/2)':d=1:s=1280x720:fps=20,setsar=1[v2];\
+              [3:v]scale=1344:756:force_original_aspect_ratio=increase,crop=1344:756,zoompan=z='1+0.00034*on':x='iw/2-(iw/zoom/2)+7*sin(on/75)':y='ih/2-(ih/zoom/2)':d=1:s=1280x720:fps=20,setsar=1[v3];\
+              [v0][v1]xfade=transition=fade:duration=0.75:offset=11.875[x1];\
+              [x1][v2]xfade=transition=fade:duration=0.75:offset=23.750[x2];\
+              [x2][v3]xfade=transition=fade:duration=0.75:offset=35.625[x3];\
+              [x3]eq=saturation=0.88:brightness=-0.035:contrast=1.04,vignette=PI/5,subtitles=/tmp/paisie/subtitles.ass:fontsdir=/usr/share/fonts/truetype/noto,fade=t=in:st=0:d=0.8,fade=t=out:st=47.25:d=1,format=yuv420p[outv];\
+              [4:a]highpass=f=75,lowpass=f=9000,equalizer=f=180:t=q:w=1:g=2,acompressor=threshold=-18dB:ratio=2:attack=20:release=250,aecho=0.8:0.9:55:0.035,loudnorm=I=-16:LRA=7:TP=-1.5[aout]" \
+            -map "[outv]" -map "[aout]" -t 48.25 \
+            -c:v libx264 -preset medium -crf 22 -pix_fmt yuv420p \
+            -c:a aac -b:a 192k -movflags +faststart \
+            video-paisie-demo/sfantul-paisie-demo.mp4
+
+      - name: Create viewing page
+        run: |
+          cat > video-paisie-demo/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ro">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>Sfântul Paisie Aghioritul — video demonstrativ</title>
+            <style>
+              html,body{margin:0;min-height:100%;background:#080a0c;color:#f4f0e5;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+              main{max-width:1100px;margin:auto;padding:28px 18px 50px;text-align:center}
+              h1{font-family:Georgia,serif;font-weight:500;letter-spacing:.04em;margin:10px 0 8px}
+              p{color:#cfc9bb;margin:0 0 22px}
+              video{width:100%;max-width:1000px;background:#000;border-radius:18px;box-shadow:0 24px 70px #000;border:1px solid #62543a}
+              small{display:block;margin-top:18px;color:#918b80}
+            </style>
+          </head>
+          <body><main>
+            <h1>Sfântul Paisie Aghioritul</h1>
+            <p>Primul video demonstrativ — voce sintetică românească, imagini în mișcare și subtitrări.</p>
+            <video controls preload="metadata" playsinline src="sfantul-paisie-demo.mp4"></video>
+            <small>Material demonstrativ pentru alegerea stilului final.</small>
+          </main></body>
+          </html>
+          HTML
+
+      - name: Commit generated video
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add video-paisie-demo
+          git commit -m 'Add Saint Paisios video demo' || exit 0
+          git push
