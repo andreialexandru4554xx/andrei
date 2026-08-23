@@ -1,0 +1,91 @@
+name: Generate natural Romanian voice sample
+
+on:
+  push:
+    paths:
+      - '.github/workflows/voice-paisie-natural-20260823.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install neural voice generator
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install edge-tts
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+
+      - name: Generate Romanian neural voice
+        run: |
+          mkdir -p voice-paisie-natural
+          cat > /tmp/paisie.txt <<'TEXT'
+          Sfântul Paisie Aghioritul s-a născut în anul o mie nouă sute douăzeci și patru, în Farasa Capadociei.
+
+          Încă din copilărie, iubea liniștea... rugăciunea... și ajutorarea oamenilor.
+
+          Mai târziu, la Sfântul Munte Athos, a ales o viață simplă: cu post, muncă și rugăciune.
+
+          La chilia Panaguda, îi primea pe cei încercați cu multă blândețe. Îi asculta. Și le reda speranța.
+          TEXT
+          edge-tts \
+            --voice ro-RO-EmilNeural \
+            --rate=-14% \
+            --pitch=-3Hz \
+            --volume=+0% \
+            --file /tmp/paisie.txt \
+            --write-media /tmp/paisie-raw.mp3 \
+            --write-subtitles voice-paisie-natural/voce-naturala-paisie.vtt
+
+          ffmpeg -y -hide_banner -loglevel warning \
+            -i /tmp/paisie-raw.mp3 \
+            -af "highpass=f=65,lowpass=f=11500,equalizer=f=170:t=q:w=1:g=1.2,equalizer=f=3200:t=q:w=1.3:g=-0.8,acompressor=threshold=-20dB:ratio=1.8:attack=18:release=220,loudnorm=I=-17:LRA=8:TP=-1.5" \
+            -c:a libmp3lame -b:a 192k \
+            voice-paisie-natural/voce-naturala-paisie.mp3
+
+      - name: Create listening page
+        run: |
+          cat > voice-paisie-natural/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ro">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>Probă voce naturală — Sfântul Paisie</title>
+            <style>
+              body{margin:0;background:#0b0c0d;color:#f2eee5;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+              main{max-width:720px;margin:0 auto;padding:48px 20px;text-align:center}
+              h1{font-family:Georgia,serif;font-weight:500}
+              p{color:#c8c0b1;line-height:1.6}
+              audio{width:100%;margin-top:22px}
+            </style>
+          </head>
+          <body><main>
+            <h1>Probă nouă de voce</h1>
+            <p>Voce neurală românească, mai lentă și mai caldă, fără ecoul robotic din prima versiune.</p>
+            <audio controls preload="metadata" src="voce-naturala-paisie.mp3"></audio>
+          </main></body>
+          </html>
+          HTML
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: voce-naturala-paisie
+          path: voice-paisie-natural/
+          retention-days: 7
+
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add voice-paisie-natural
+          git commit -m 'Add natural Romanian voice sample for Saint Paisios' || exit 0
+          git push
