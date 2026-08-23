@@ -1,0 +1,28 @@
+name: Package Saint Paisios voice sample for chat
+
+on:
+  push:
+    paths:
+      - '.github/workflows/package-paisie-voice-for-chat-20260823.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Split base64 sample into compact text chunks
+        run: |
+          rm -f voice-paisie-natural/chat-chunk-*
+          split -b 16000 -d -a 2 \
+            voice-paisie-natural/voce-naturala-proba-scurta.b64 \
+            voice-paisie-natural/chat-chunk-
+      - name: Commit chunks
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add voice-paisie-natural/chat-chunk-*
+          git commit -m 'Package natural voice sample into chat chunks' || exit 0
+          git push
