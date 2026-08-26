@@ -56,8 +56,10 @@ jobs:
           # Keep the browser client deterministic instead of following a moving major-version URL.
           sed -i 's#@supabase/supabase-js@2/+esm#@supabase/supabase-js@2.112.4/+esm#' _site/control-postari-agenti/app.js
 
-          # Temporary direct guest mode: the original application remains unchanged.
+          # Temporary direct guest mode plus photo upload: the original package stays unchanged.
           cp control-postari-agenti/guest-supabase.js _site/control-postari-agenti/guest-supabase.js
+          cp control-postari-agenti/photo-upload.js _site/control-postari-agenti/photo-upload.js
+          cp control-postari-agenti/photo-upload.css _site/control-postari-agenti/photo-upload.css
           python3 control-postari-agenti/enable-guest-ui.py _site/control-postari-agenti/index.html
 
           rm -rf _site/.git _site/.github _site/.deploy
@@ -77,18 +79,27 @@ jobs:
           test -s _site/control-postari-agenti/styles.css
           test -s _site/control-postari-agenti/app.js
           test -s _site/control-postari-agenti/guest-supabase.js
+          test -s _site/control-postari-agenti/photo-upload.js
+          test -s _site/control-postari-agenti/photo-upload.css
           grep -q "Control Postări Agenți" _site/control-postari-agenti/index.html
           grep -q "Acces deschis" _site/control-postari-agenti/index.html
           grep -q "guest-supabase.js" _site/control-postari-agenti/index.html
+          grep -q "photo-upload.js" _site/control-postari-agenti/index.html
+          grep -q "photo-upload.css" _site/control-postari-agenti/index.html
           grep -q "auth-view" _site/control-postari-agenti/styles.css
           grep -q "pc_posts" _site/control-postari-agenti/app.js
           grep -q "sb_publishable_" _site/control-postari-agenti/app.js
           grep -q "@supabase/supabase-js@2.112.4/+esm" _site/control-postari-agenti/app.js
           grep -q "GUEST_ID" _site/control-postari-agenti/guest-supabase.js
+          grep -q "PHOTO_BUCKET = 'control-postari-dovezi'" _site/control-postari-agenti/photo-upload.js
+          grep -q "data-photo-file" _site/control-postari-agenti/photo-upload.js
+          grep -q "photo-upload-card" _site/control-postari-agenti/photo-upload.css
           cp _site/control-postari-agenti/app.js /tmp/control-postari-app.mjs
           cp _site/control-postari-agenti/guest-supabase.js /tmp/control-postari-guest.mjs
+          cp _site/control-postari-agenti/photo-upload.js /tmp/control-postari-photo.mjs
           node --check /tmp/control-postari-app.mjs
           node --check /tmp/control-postari-guest.mjs
+          node --check /tmp/control-postari-photo.mjs
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
@@ -130,16 +141,23 @@ jobs:
             index="$(curl -fsSL --max-time 20 "$PUBLIC_URL" || true)"
             app="$(curl -fsSL --max-time 20 "${PUBLIC_URL}app.js" || true)"
             guest="$(curl -fsSL --max-time 20 "${PUBLIC_URL}guest-supabase.js" || true)"
+            photo="$(curl -fsSL --max-time 20 "${PUBLIC_URL}photo-upload.js" || true)"
+            photo_css="$(curl -fsSL --max-time 20 "${PUBLIC_URL}photo-upload.css" || true)"
             styles="$(curl -fsSL --max-time 20 "${PUBLIC_URL}styles.css" || true)"
             if grep -q "Control Postări Agenți" <<<"$index" \
               && grep -q "Acces deschis" <<<"$index" \
               && grep -q "guest-supabase.js" <<<"$index" \
+              && grep -q "photo-upload.js" <<<"$index" \
+              && grep -q "photo-upload.css" <<<"$index" \
               && grep -q "auth-view" <<<"$styles" \
               && grep -q "pc_posts" <<<"$app" \
               && grep -q "sb_publishable_" <<<"$app" \
               && grep -q "@supabase/supabase-js@2.112.4/+esm" <<<"$app" \
-              && grep -q "GUEST_ID" <<<"$guest"; then
-              echo "Control Postări Agenți guest mode is live and verified at $PUBLIC_URL"
+              && grep -q "GUEST_ID" <<<"$guest" \
+              && grep -q "control-postari-dovezi" <<<"$photo" \
+              && grep -q "data-photo-file" <<<"$photo" \
+              && grep -q "photo-upload-card" <<<"$photo_css"; then
+              echo "Control Postări Agenți photo upload is live and verified at $PUBLIC_URL"
               exit 0
             fi
             sleep 5
