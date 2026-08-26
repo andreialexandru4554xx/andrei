@@ -42,11 +42,16 @@ jobs:
             unzip -q -o /tmp/seconds-agents.zip -d _site/seconds-agents
           fi
 
-          # Publish the rebuilt Control Postări Agenți application.
-          # This package is committed as a real ZIP file, not Base64 text.
+          # Recover the complete application files from the historical package.
+          # Its ZIP central directory is missing, but its local entries are intact.
           if [[ -f ".deploy/control-postari-agenti.zip" ]]; then
-            mkdir -p _site/control-postari-agenti
-            unzip -q -o .deploy/control-postari-agenti.zip -d _site/control-postari-agenti
+            rm -rf _site/control-postari-agenti
+            python .github/scripts/recover_local_zip.py \
+              .deploy/control-postari-agenti.zip \
+              _site/control-postari-agenti \
+              --require index.html \
+              --require styles.css \
+              --require app.js
           fi
 
           rm -rf _site/.git _site/.github _site/.deploy
