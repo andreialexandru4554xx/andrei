@@ -1,0 +1,34 @@
+name: Test Media Sheets public access
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - '.github/workflows/test-media-sheets-public.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check unauthenticated Google Sheets feeds
+        shell: bash
+        run: |
+          set -euo pipefail
+          urls=(
+            "https://docs.google.com/spreadsheets/d/1tXT6IM9KTL3VaXsqpF_3diVD3tQsYGRjv-MH3izbVWM/gviz/tq?tqx=out:csv&sheet=Agents"
+            "https://docs.google.com/spreadsheets/d/1ROI4PSwnqKLx9ZQKHoUEXsKeDYQMiQ4z4TF81MP3L-U/gviz/tq?tqx=out:csv&sheet=Postari"
+            "https://docs.google.com/spreadsheets/d/17xoju8UqZi0aHvGU2cTgeJ_De_ocHMpI0LTtxk2lR4U/gviz/tq?tqx=out:csv&sheet=Postari"
+          )
+          for url in "${urls[@]}"; do
+            echo "--- $url"
+            status="$(curl -L -sS -o /tmp/feed -w '%{http_code}' --max-time 30 "$url" || true)"
+            type="$(file -b --mime-type /tmp/feed 2>/dev/null || true)"
+            bytes="$(wc -c < /tmp/feed 2>/dev/null || echo 0)"
+            echo "status=$status type=$type bytes=$bytes"
+            head -c 500 /tmp/feed | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g'
+            echo
+          done
