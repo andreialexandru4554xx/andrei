@@ -1,0 +1,190 @@
+.photo-upload-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 118px;
+  gap: 18px;
+  align-items: center;
+  min-height: 142px;
+  margin: 0 0 17px;
+  padding: 17px;
+  border: 1px dashed rgba(110, 182, 255, .42);
+  border-radius: 17px;
+  background: linear-gradient(145deg, rgba(35, 67, 111, .34), rgba(14, 31, 56, .52));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 12px 30px rgba(0, 0, 0, .12);
+  overflow: hidden;
+}
+
+.photo-upload-card::before {
+  content: "";
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  top: -92px;
+  left: -44px;
+  border-radius: 50%;
+  background: rgba(79, 140, 255, .13);
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.photo-upload-card.has-error {
+  border-color: rgba(255, 101, 132, .55);
+  background: linear-gradient(145deg, rgba(90, 35, 59, .29), rgba(37, 19, 38, .48));
+}
+
+.photo-upload-copy {
+  position: relative;
+  min-width: 0;
+}
+
+.photo-upload-label {
+  display: block;
+  margin-bottom: 5px;
+  color: #9dcbff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.photo-upload-copy strong,
+.photo-upload-copy small {
+  display: block;
+}
+
+.photo-upload-copy strong {
+  margin-bottom: 5px;
+  color: var(--text);
+  font-family: Manrope, Inter, sans-serif;
+  font-size: 14px;
+}
+
+.photo-upload-copy small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.photo-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.photo-upload-actions .button {
+  min-height: 36px;
+}
+
+.photo-remove {
+  border: 1px solid rgba(255, 101, 132, .28);
+  background: rgba(255, 101, 132, .08);
+  color: #ff9eb1;
+}
+
+.photo-file-input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.photo-upload-preview {
+  position: relative;
+  display: grid;
+  width: 118px;
+  height: 108px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(139, 190, 255, .3);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(73, 130, 225, .16), rgba(66, 53, 157, .13));
+  color: #abd5ff;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.photo-upload-preview:hover {
+  border-color: rgba(139, 190, 255, .62);
+  box-shadow: 0 10px 25px rgba(30, 87, 194, .18), inset 0 1px 0 rgba(255, 255, 255, .08);
+  transform: translateY(-2px);
+}
+
+.photo-upload-preview > span {
+  display: grid;
+  gap: 4px;
+  place-items: center;
+  font-size: 27px;
+  font-weight: 300;
+}
+
+.photo-upload-preview > span small {
+  color: #83bfff;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.photo-upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-upload-preview.has-image::after {
+  content: "Schimbă";
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 999px;
+  background: rgba(3, 10, 22, .74);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  backdrop-filter: blur(7px);
+}
+
+@media (max-width: 560px) {
+  .photo-upload-card {
+    grid-template-columns: 1fr 92px;
+    gap: 12px;
+    min-height: 130px;
+    padding: 14px;
+  }
+
+  .photo-upload-preview {
+    width: 92px;
+    height: 96px;
+  }
+
+  .photo-upload-copy strong {
+    font-size: 13px;
+  }
+
+  .photo-upload-actions .button {
+    padding-inline: 11px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 390px) {
+  .photo-upload-card {
+    grid-template-columns: 1fr;
+  }
+
+  .photo-upload-preview {
+    width: 100%;
+    height: 130px;
+  }
+}
