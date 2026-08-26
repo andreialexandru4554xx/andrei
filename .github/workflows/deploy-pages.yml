@@ -90,13 +90,21 @@ jobs:
           PUBLIC_URL: ${{ steps.deployment.outputs.page_url }}seconds-agents/
         run: |
           set -euo pipefail
-          index="$(curl -fsSL --max-time 20 "$PUBLIC_URL" || true)"
-          app="$(curl -fsSL --max-time 20 "${PUBLIC_URL}app.js" || true)"
-          grep -q "Seconds Agents" <<<"$index"
-          grep -q "seconds-agents:data:v1" <<<"$app"
+          for attempt in {1..24}; do
+            index="$(curl -fsSL --max-time 20 "$PUBLIC_URL" || true)"
+            app="$(curl -fsSL --max-time 20 "${PUBLIC_URL}app.js" || true)"
+            if grep -q "Seconds Agents" <<<"$index" \
+              && grep -q "seconds-agents:data:v1" <<<"$app"; then
+              echo "Seconds Agents is live and verified at $PUBLIC_URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Seconds Agents public verification failed for $PUBLIC_URL" >&2
+          exit 1
 
       - name: Mark verified deployment
         shell: bash
         run: |
           set -euo pipefail
-          git push --force origin "HEAD:refs/heads/business-tower-live"
+          git push --force origin "HEAD:refs/heads/business-tower-live" "HEAD:refs/heads/seconds-agents-live"
