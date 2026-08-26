@@ -45,7 +45,8 @@ jobs:
           # Publish the rebuilt Control Postări Agenți application.
           if [[ -f ".deploy/control-postari-agenti.zip" ]]; then
             mkdir -p _site/control-postari-agenti
-            unzip -q -o .deploy/control-postari-agenti.zip -d _site/control-postari-agenti
+            base64 --decode .deploy/control-postari-agenti.zip > /tmp/control-postari-agenti.zip
+            unzip -q -o /tmp/control-postari-agenti.zip -d _site/control-postari-agenti
           fi
 
           rm -rf _site/.git _site/.github _site/.deploy
