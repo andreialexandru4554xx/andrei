@@ -9,13 +9,19 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260826-open1" />
+  <style>
+    .open-access-badge{display:inline-flex;align-items:center;gap:.45rem;padding:.58rem .82rem;border:1px solid rgba(79,224,178,.28);border-radius:999px;background:rgba(79,224,178,.10);color:#bff8e7;font-size:.78rem;font-weight:800;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+    .open-user-menu #userMenuBtn{cursor:default;pointer-events:none}
+    .open-user-menu #userDropdown{display:none!important}
+    @media(max-width:760px){.open-access-badge{display:none}}
+  </style>
 </head>
 <body>
   <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
   <div id="toast" class="toast" aria-live="polite"></div>
 
-  <main id="authView" class="auth-shell">
+  <main id="authView" class="auth-shell hidden">
     <section class="brand-panel glass">
       <div class="logo-orbit"><div class="logo-core">CP</div></div>
       <span class="eyebrow">RECRUITFLOW • MEDIA OPERATIONS</span>
@@ -60,7 +66,7 @@
     </section>
   </main>
 
-  <div id="appView" class="app-shell hidden">
+  <div id="appView" class="app-shell">
     <aside class="sidebar">
       <div class="sidebar-brand"><div class="mini-logo">CP</div><div><strong>Control Postări</strong><small>Media Operations</small></div></div>
       <nav id="mainNav" class="nav-list">
@@ -72,16 +78,17 @@
         <button class="nav-item admin-only" data-page="team"><span>♙</span> Echipă</button>
         <button class="nav-item admin-only" data-page="audit"><span>⌕</span> Audit</button>
       </nav>
-      <div class="sidebar-foot"><div class="health-dot"></div><div><strong>Backend conectat</strong><small>Supabase • RLS activ</small></div></div>
+      <div class="sidebar-foot"><div class="health-dot"></div><div><strong>Mod deschis</strong><small>Sincronizare comună activă</small></div></div>
     </aside>
 
     <header class="topbar">
       <button id="menuBtn" class="icon-btn menu-btn" aria-label="Meniu">☰</button>
       <div><span id="pageEyebrow" class="eyebrow">VEDERE GENERALĂ</span><h2 id="pageTitle">Dashboard</h2></div>
       <div class="top-actions">
+        <div class="open-access-badge">🔓 Acces deschis</div>
         <button id="refreshBtn" class="icon-btn" title="Actualizează">↻</button>
         <button id="addPostBtn" class="btn primary">＋ Adaugă postare</button>
-        <div class="user-menu"><button id="userMenuBtn" class="user-chip"><span id="userInitials">AA</span><div><strong id="userName">Utilizator</strong><small id="userRole">viewer</small></div><i>⌄</i></button><div id="userDropdown" class="dropdown hidden"><button id="logoutBtn">Ieșire din cont</button></div></div>
+        <div class="user-menu open-user-menu"><button id="userMenuBtn" class="user-chip"><span id="userInitials">AA</span><div><strong id="userName">Andrei</strong><small id="userRole">Administrator</small></div><i>•</i></button><div id="userDropdown" class="dropdown hidden"><button id="logoutBtn">Ieșire din cont</button></div></div>
       </div>
     </header>
 
@@ -111,7 +118,8 @@
   <template id="emptyTemplate"><div class="empty-state"><div>◌</div><h3>Nicio înregistrare</h3><p>Nu există date pentru filtrele selectate.</p></div></template>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="open-mode.js?v=20260826-open1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260826-open1"></script>
 </body>
 </html>
