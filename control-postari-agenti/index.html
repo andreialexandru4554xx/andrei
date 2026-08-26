@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="description" content="Control Postări Agenți — monitorizare, aprobare și performanță pentru postările echipei." />
+  <title>Control Postări Agenți</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <main id="authView" class="auth-shell">
+    <section class="brand-panel glass">
+      <div class="logo-orbit"><div class="logo-core">CP</div></div>
+      <span class="eyebrow">RECRUITFLOW • MEDIA OPERATIONS</span>
+      <h1>Control Postări<br><span>Agenți</span></h1>
+      <p>Vezi rapid cine a postat, pe ce canal, ce trebuie verificat și unde echipa rămâne în urmă.</p>
+      <div class="brand-stats">
+        <div><strong>Live</strong><small>actualizare în timp real</small></div>
+        <div><strong>Privat</strong><small>acces pe roluri</small></div>
+        <div><strong>Audit</strong><small>istoric complet</small></div>
+      </div>
+    </section>
+
+    <section class="auth-card glass">
+      <div class="auth-tabs"><button class="auth-tab active" data-auth-tab="login">Intră în cont</button><button class="auth-tab" data-auth-tab="signup">Creează cont</button></div>
+      <form id="loginForm" class="auth-form">
+        <label>Email<input id="loginEmail" type="email" autocomplete="email" required placeholder="nume@companie.com"></label>
+        <label>Parolă<input id="loginPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="••••••••"></label>
+        <button class="btn primary wide" type="submit">Autentificare</button>
+      </form>
+      <form id="signupForm" class="auth-form hidden">
+        <label>Nume complet<input id="signupName" type="text" required minlength="2" maxlength="100" placeholder="Numele tău"></label>
+        <label>Email<input id="signupEmail" type="email" autocomplete="email" required placeholder="nume@companie.com"></label>
+        <label>Parolă<input id="signupPassword" type="password" autocomplete="new-password" required minlength="8" placeholder="Minimum 8 caractere"></label>
+        <button class="btn primary wide" type="submit">Creează cont</button>
+        <p class="form-note">Conturile noi trebuie activate sau aprobate înainte să vadă datele.</p>
+      </form>
+    </section>
+  </main>
+
+  <main id="accessView" class="center-view hidden">
+    <section class="access-card glass">
+      <div class="status-icon">🔐</div>
+      <span class="eyebrow">ACCES PROTEJAT</span>
+      <h2 id="accessTitle">Cont în așteptare</h2>
+      <p id="accessMessage">Un administrator trebuie să aprobe accesul.</p>
+      <form id="claimAdminForm" class="claim-form hidden">
+        <label>Cod unic de activare<input id="activationCode" autocomplete="one-time-code" placeholder="CP-XXXX-XXXX-XXXX" required></label>
+        <button class="btn primary wide" type="submit">Activează administratorul</button>
+      </form>
+      <button id="refreshAccessBtn" class="btn secondary" type="button">Verifică din nou</button>
+      <button id="accessLogoutBtn" class="link-btn" type="button">Ieșire din cont</button>
+    </section>
+  </main>
+
+  <div id="appView" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="mini-logo">CP</div><div><strong>Control Postări</strong><small>Media Operations</small></div></div>
+      <nav id="mainNav" class="nav-list">
+        <button class="nav-item active" data-page="dashboard"><span>◈</span> Dashboard</button>
+        <button class="nav-item" data-page="posts"><span>▤</span> Postări</button>
+        <button class="nav-item" data-page="approvals"><span>✓</span> Aprobări <b id="approvalBadge" class="badge hidden">0</b></button>
+        <button class="nav-item" data-page="agents"><span>◎</span> Agenți</button>
+        <button class="nav-item" data-page="channels"><span>⌁</span> Canale</button>
+        <button class="nav-item admin-only" data-page="team"><span>♙</span> Echipă</button>
+        <button class="nav-item admin-only" data-page="audit"><span>⌕</span> Audit</button>
+      </nav>
+      <div class="sidebar-foot"><div class="health-dot"></div><div><strong>Backend conectat</strong><small>Supabase • RLS activ</small></div></div>
+    </aside>
+
+    <header class="topbar">
+      <button id="menuBtn" class="icon-btn menu-btn" aria-label="Meniu">☰</button>
+      <div><span id="pageEyebrow" class="eyebrow">VEDERE GENERALĂ</span><h2 id="pageTitle">Dashboard</h2></div>
+      <div class="top-actions">
+        <button id="refreshBtn" class="icon-btn" title="Actualizează">↻</button>
+        <button id="addPostBtn" class="btn primary">＋ Adaugă postare</button>
+        <div class="user-menu"><button id="userMenuBtn" class="user-chip"><span id="userInitials">AA</span><div><strong id="userName">Utilizator</strong><small id="userRole">viewer</small></div><i>⌄</i></button><div id="userDropdown" class="dropdown hidden"><button id="logoutBtn">Ieșire din cont</button></div></div>
+      </div>
+    </header>
+
+    <section id="pageContent" class="page-content"></section>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden" role="presentation">
+    <section class="modal glass" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header><div><span class="eyebrow">EDITOR</span><h3 id="modalTitle">Postare</h3></div><button id="closeModalBtn" class="icon-btn" aria-label="Închide">×</button></header>
+      <form id="postForm" class="form-grid">
+        <input id="postId" type="hidden">
+        <label>Agent<select id="postAgent" required></select></label>
+        <label>Canal<select id="postChannel" required></select></label>
+        <label class="span-2">Titlu<input id="postTitle" required maxlength="250" placeholder="Titlul materialului"></label>
+        <label>Campanie<input id="postCampaign" maxlength="120" placeholder="Educație, LowRent..."></label>
+        <label>Data și ora<input id="postDate" type="datetime-local" required></label>
+        <label class="span-2">Link postare<input id="postUrl" type="url" placeholder="https://..."></label>
+        <label class="span-2">Dovadă / captură<input id="proofUrl" type="url" placeholder="https://..."></label>
+        <label>Status<select id="postStatus"><option value="published">Publicată</option><option value="pending">În așteptare</option><option value="removed">Eliminată</option></select></label>
+        <label>Verificare<select id="verificationStatus"><option value="unverified">Neverificată</option><option value="verified">Aprobată</option><option value="rejected">Respinsă</option></select></label>
+        <label class="span-2">Notițe<textarea id="postNotes" rows="4" maxlength="1000" placeholder="Detalii utile..."></textarea></label>
+        <div class="modal-actions span-2"><button id="deletePostBtn" class="btn danger hidden" type="button">Șterge</button><span></span><button id="cancelModalBtn" class="btn secondary" type="button">Renunță</button><button class="btn primary" type="submit">Salvează</button></div>
+      </form>
+    </section>
+  </div>
+
+  <template id="emptyTemplate"><div class="empty-state"><div>◌</div><h3>Nicio înregistrare</h3><p>Nu există date pentru filtrele selectate.</p></div></template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
