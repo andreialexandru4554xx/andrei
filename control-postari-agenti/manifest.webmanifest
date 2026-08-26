@@ -1,0 +1,13 @@
+{
+  "name": "Control Postări Agenți",
+  "short_name": "Postări",
+  "description": "Monitorizare, aprobare și statistici pentru postările agenților.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#06101d",
+  "theme_color": "#07111f",
+  "icons": [
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
