@@ -27,7 +27,7 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare site
+      - name: Prepare and validate site
         shell: bash
         run: |
           set -euo pipefail
@@ -42,20 +42,21 @@ jobs:
             unzip -q -o /tmp/seconds-agents.zip -d _site/seconds-agents
           fi
 
-          # Publish the verified clean Control Postări Agenți package.
-          if ! compgen -G ".deploy/control-postari-clean.b64.*" > /dev/null; then
-            echo "Clean Control Postări package is missing" >&2
+          # Rebuild Control Postări Agenți from verified deterministic chunks.
+          if ! compgen -G ".deploy/control-postari-v2.b64.*" > /dev/null; then
+            echo "Control Postări v2 package is missing" >&2
             exit 1
           fi
+          cat .deploy/control-postari-v2.b64.* | base64 --decode > /tmp/control-postari-v2.tar.gz
+          echo "14b4afefec963be9e1fd010383a124adca1ceed9fdbe2f46eca837bb3aa482f3  /tmp/control-postari-v2.tar.gz" | sha256sum -c -
           rm -rf _site/control-postari-agenti
           mkdir -p _site/control-postari-agenti
-          cat .deploy/control-postari-clean.b64.* | base64 --decode > /tmp/control-postari-clean.zip
-          echo "58517fefa3f7c86060928bc90d1a4bad20efe825e7e9fefafac7a809ba95b7ad  /tmp/control-postari-clean.zip" | sha256sum -c -
-          unzip -q -o /tmp/control-postari-clean.zip -d _site/control-postari-agenti
+          tar -xzf /tmp/control-postari-v2.tar.gz -C _site/control-postari-agenti
 
           rm -rf _site/.git _site/.github _site/.deploy
           rm -f _site/seconds-agents-package.zip
 
+          # Validate Business Tower.
           test -s _site/index.html
           test -s _site/styles.css
           test -s _site/src/main.js
@@ -64,13 +65,16 @@ jobs:
           grep -q "class BusinessTower3D" _site/src/main.js
           grep -q "businessFloors" _site/src/data.js
 
+          # Validate Control Postări Agenți before publishing.
           test -s _site/control-postari-agenti/index.html
           test -s _site/control-postari-agenti/styles.css
           test -s _site/control-postari-agenti/app.js
           grep -q "Control Postări Agenți" _site/control-postari-agenti/index.html
+          grep -q "auth-view" _site/control-postari-agenti/styles.css
           grep -q "pc_posts" _site/control-postari-agenti/app.js
-          grep -q "fetchAllPosts" _site/control-postari-agenti/app.js
-          grep -q "auth-shell" _site/control-postari-agenti/styles.css
+          grep -q "sb_publishable_" _site/control-postari-agenti/app.js
+          cp _site/control-postari-agenti/app.js /tmp/control-postari-app.mjs
+          node --check /tmp/control-postari-app.mjs
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
@@ -102,7 +106,7 @@ jobs:
           echo "Public verification failed for $ROOT_URL" >&2
           exit 1
 
-      - name: Verify Control Postări Agenți
+      - name: Verify public Control Postări Agenți
         shell: bash
         env:
           PUBLIC_URL: ${{ steps.deployment.outputs.page_url }}control-postari-agenti/
@@ -113,9 +117,9 @@ jobs:
             app="$(curl -fsSL --max-time 20 "${PUBLIC_URL}app.js" || true)"
             styles="$(curl -fsSL --max-time 20 "${PUBLIC_URL}styles.css" || true)"
             if grep -q "Control Postări Agenți" <<<"$index" \
+              && grep -q "auth-view" <<<"$styles" \
               && grep -q "pc_posts" <<<"$app" \
-              && grep -q "fetchAllPosts" <<<"$app" \
-              && grep -q "auth-shell" <<<"$styles"; then
+              && grep -q "sb_publishable_" <<<"$app"; then
               echo "Control Postări Agenți is live and verified at $PUBLIC_URL"
               exit 0
             fi
