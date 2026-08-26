@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Recover complete files from ZIP local headers when the central directory is missing."""
+"""Recover files from ZIP local headers when the archive tail is missing."""
 
 from __future__ import annotations
 
 import argparse
 import binascii
+import json
 from pathlib import Path, PurePosixPath
 import struct
 import sys
@@ -24,12 +25,36 @@ def safe_destination(root: Path, archive_name: str) -> Path:
     return root.joinpath(*relative.parts)
 
 
-def recover(source: Path, destination: Path) -> list[str]:
+def decode_content(method: int, compressed: bytes, archive_name: str) -> bytes:
+    if method == 0:
+        return compressed
+    if method == 8:
+        return zlib.decompress(compressed, -zlib.MAX_WBITS)
+    raise ValueError(
+        f"Unsupported ZIP compression method {method} for {archive_name!r}"
+    )
+
+
+def decode_partial_content(method: int, compressed: bytes, archive_name: str) -> bytes:
+    if method == 0:
+        return compressed
+    if method == 8:
+        decompressor = zlib.decompressobj(-zlib.MAX_WBITS)
+        return decompressor.decompress(compressed) + decompressor.flush()
+    raise ValueError(
+        f"Unsupported ZIP compression method {method} for {archive_name!r}"
+    )
+
+
+def recover(
+    source: Path, destination: Path, allow_partial: bool
+) -> tuple[list[str], list[dict[str, int | str]]]:
     payload = source.read_bytes()
     destination.mkdir(parents=True, exist_ok=True)
 
     cursor = 0
     extracted: list[str] = []
+    partial_entries: list[dict[str, int | str]] = []
 
     while cursor < len(payload):
         signature = payload[cursor : cursor + 4]
@@ -48,7 +73,9 @@ def recover(source: Path, destination: Path) -> list[str]:
             cursor = next_header
 
         if cursor + 30 > len(payload):
-            raise ValueError("Truncated ZIP local header")
+            raise ValueError(
+                f"Truncated ZIP local header at byte {cursor}; archive has {len(payload)} bytes"
+            )
 
         (
             _signature,
@@ -72,23 +99,41 @@ def recover(source: Path, destination: Path) -> list[str]:
         name_start = cursor + 30
         name_end = name_start + name_length
         data_start = name_end + extra_length
-        data_end = data_start + compressed_size
-        if data_end > len(payload):
-            raise ValueError("Truncated compressed ZIP entry")
-
         encoding = "utf-8" if flags & 0x0800 else "cp437"
         archive_name = payload[name_start:name_end].decode(encoding)
         output_path = safe_destination(destination, archive_name)
-        compressed = payload[data_start:data_end]
+        data_end = data_start + compressed_size
 
-        if method == 0:
-            content = compressed
-        elif method == 8:
-            content = zlib.decompress(compressed, -zlib.MAX_WBITS)
-        else:
-            raise ValueError(
-                f"Unsupported ZIP compression method {method} for {archive_name!r}"
+        if data_end > len(payload):
+            available = payload[data_start:]
+            shortage = data_end - len(payload)
+            message = (
+                f"Truncated compressed ZIP entry {archive_name!r}: expected "
+                f"{compressed_size} compressed bytes, found {len(available)}; "
+                f"missing {shortage} bytes"
             )
+            if not allow_partial:
+                raise ValueError(message)
+
+            content = decode_partial_content(method, available, archive_name)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_bytes(content)
+            extracted.append(archive_name)
+            partial_entries.append(
+                {
+                    "name": archive_name,
+                    "compressed_expected": compressed_size,
+                    "compressed_recovered": len(available),
+                    "uncompressed_expected": uncompressed_size,
+                    "uncompressed_recovered": len(content),
+                    "compressed_missing": shortage,
+                }
+            )
+            print("WARNING: " + message, file=sys.stderr)
+            break
+
+        compressed = payload[data_start:data_end]
+        content = decode_content(method, compressed, archive_name)
 
         if len(content) != uncompressed_size:
             raise ValueError(f"Size mismatch while recovering {archive_name!r}")
@@ -109,7 +154,15 @@ def recover(source: Path, destination: Path) -> list[str]:
     if not extracted:
         raise ValueError("No recoverable ZIP entries were found")
 
-    return extracted
+    report = {
+        "source_bytes": len(payload),
+        "extracted": extracted,
+        "partial_entries": partial_entries,
+    }
+    (destination / "recovery-report.json").write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return extracted, partial_entries
 
 
 def main() -> int:
@@ -117,10 +170,13 @@ def main() -> int:
     parser.add_argument("source", type=Path)
     parser.add_argument("destination", type=Path)
     parser.add_argument("--require", action="append", default=[])
+    parser.add_argument("--allow-partial", action="store_true")
     args = parser.parse_args()
 
     try:
-        extracted = recover(args.source, args.destination)
+        extracted, partial_entries = recover(
+            args.source, args.destination, args.allow_partial
+        )
         missing = sorted(set(args.require).difference(extracted))
         if missing:
             raise ValueError(f"Required recovered files are missing: {missing}")
@@ -129,6 +185,8 @@ def main() -> int:
         return 1
 
     print("Recovered files: " + ", ".join(extracted))
+    if partial_entries:
+        print("Partial files: " + ", ".join(str(item["name"]) for item in partial_entries))
     return 0
 
 
